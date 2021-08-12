@@ -1,0 +1,24 @@
+.gradle
+.vagrant
+.vscode
+
+.idea/
+cmake-*
+lst_simulator.cbp
+CUnitAutomated-Listing.xml
+CUnitAutomated-Results.xml
+
+build
+ubuntu-xenial*
+\.idea/
+cmake-build-debug/
+
+ccHTML
+app.info
+assets/usr
+
+*.o
+*.d
+
+# exclude documentation files
+doc/
