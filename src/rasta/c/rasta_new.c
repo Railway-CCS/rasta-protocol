@@ -1133,7 +1133,7 @@ void * receive_thread(void * handle){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct rasta_receive_handle *h = (struct rasta_receive_handle*)handle;
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Receive thread started");
@@ -1281,7 +1281,7 @@ void * heartbeat_thread(void * handle){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) handle;
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
@@ -1354,7 +1354,7 @@ void * send_thread(void * handle){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct rasta_sending_handle *h = (struct rasta_sending_handle*)handle;
 
@@ -1726,14 +1726,26 @@ void sr_cleanup(struct rasta_handle *h) {
     h->recv_running = 0;
     h->send_running = 0;
 
+    // Due to the unset running flags above, the threads may already be exiting.
+    // Do not cancel them since this might lead to an already exiting thread to not free its malloc arena locks.
+    // https://stackoverflow.com/questions/49701888/how-can-i-find-out-the-source-of-this-glibc-backtrace-originating-with-clone
+    // > It turns out this bug was caused by pthread_cancel using asynchronous cancel type. Essentially, we believe that pthread_cancel
+    // > was cancelling a thread while it was exiting, i.e. while it was holding the arena locks. Thus, all the other threads deadlock on
+    // > the arena lock either when they call malloc or when they exit, since it is held by a thread that no longer exists.
+
     // cancel receive thread
     pthread_cancel(h->receive_handle->recv_thread);
+    pthread_join(h->receive_handle->recv_thread, NULL);
 
     // cancel sending thread
     pthread_cancel(h->send_handle->send_thread);
+    pthread_join(h->send_handle->send_thread, NULL);
 
     // cancel hb thread
     pthread_cancel(h->heartbeat_handle->hb_thread);
+    pthread_join(h->heartbeat_handle->hb_thread, NULL);
+
+    logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Cleanup", "Threads joined");
 
     for (int i = 0; i < h->connections.size; i++) {
         struct rasta_connection connection = h->connections.data[i];

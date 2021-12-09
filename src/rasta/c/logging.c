@@ -115,7 +115,7 @@ void * write_log_messages(void * logger_ptr){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     // set cancel type to async, i.e. can always be canceled
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     write_thread_parameter_wrapper * wrapper = (write_thread_parameter_wrapper *)logger_ptr;
 
@@ -277,6 +277,7 @@ void logger_destroy(struct logger_t * logger){
     }
 
     pthread_cancel(logger->write_thread);
+    pthread_join(logger->write_thread, NULL);
 
     pthread_mutex_destroy(&logger->mutex);
 
