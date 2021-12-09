@@ -739,13 +739,13 @@ void config_setstd(struct RastaConfig * cfg) {
 
     //receiver
     entr = config_get(cfg, "RASTA_ID");
-    if (entr.type != DICTIONARY_NUMBER || entr.value.number < 0) {
+    if (entr.type != DICTIONARY_NUMBER || entr.value.unumber < 0) {
         //set std
         cfg->values.general.rasta_id = 0;
     }
     else {
         //check valid format
-        cfg->values.general.rasta_id = (unsigned long)entr.value.number;
+        cfg->values.general.rasta_id = (unsigned long)entr.value.unumber;
     }
 
 

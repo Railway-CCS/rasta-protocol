@@ -39,6 +39,7 @@ struct DictionaryArray {
  * represents the value
  */
 union DictionaryValue {
+    unsigned int unumber;
     int number;
     struct DictionaryString string;
     struct DictionaryArray array;
