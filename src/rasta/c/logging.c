@@ -61,8 +61,6 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
         return NULL;
     }
 
-    // localtime is not thread-safe
-
     // generate timestamp
     time_t current_time = time(NULL);
     struct tm tt;
@@ -116,8 +114,6 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
 void * write_log_messages(void * logger_ptr){
     // enable possibility to cancel thread
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
-    // set cancel type to async, i.e. can always be canceled
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     write_thread_parameter_wrapper * wrapper = (write_thread_parameter_wrapper *)logger_ptr;

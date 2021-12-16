@@ -320,8 +320,6 @@ void receive_packet(redundancy_mux * mux, int channel_id){
 void * channel_receive_handler(void * arg_wrapper){
     // enable possibility to cancel thread
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
-    // set cancel type to async, i.e. can always be canceled
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct receive_thread_parameter_wrapper * args = (struct receive_thread_parameter_wrapper*)arg_wrapper;

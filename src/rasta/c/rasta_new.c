@@ -1726,13 +1726,6 @@ void sr_cleanup(struct rasta_handle *h) {
     h->recv_running = 0;
     h->send_running = 0;
 
-    // Due to the unset running flags above, the threads may already be exiting.
-    // Do not cancel them since this might lead to an already exiting thread to not free its malloc arena locks.
-    // https://stackoverflow.com/questions/49701888/how-can-i-find-out-the-source-of-this-glibc-backtrace-originating-with-clone
-    // > It turns out this bug was caused by pthread_cancel using asynchronous cancel type. Essentially, we believe that pthread_cancel
-    // > was cancelling a thread while it was exiting, i.e. while it was holding the arena locks. Thus, all the other threads deadlock on
-    // > the arena lock either when they call malloc or when they exit, since it is held by a thread that no longer exists.
-
     // cancel receive thread
     pthread_cancel(h->receive_handle->recv_thread);
     pthread_join(h->receive_handle->recv_thread, NULL);
