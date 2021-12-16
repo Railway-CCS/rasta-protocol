@@ -64,19 +64,20 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
     // localtime is not thread-safe
 
     // generate timestamp
-    // time_t current_time = time(NULL);
-    // struct tm * time_info = localtime(&current_time);
-    // char timestamp[30];
-    // char timestamp2[60];
+    time_t current_time = time(NULL);
+    struct tm tt;
+    struct tm * time_info = localtime_r(&current_time, &tt);
+    char timestamp[30];
+    char timestamp2[60];
 
-    // // ms since 1.1.1970
-    // struct timeval tv;
+    // ms since 1.1.1970
+    struct timeval tv;
 
-    // gettimeofday(&tv, NULL);
+    gettimeofday(&tv, NULL);
 
-    // unsigned long long millisecondsSinceEpoch =
-    //         (unsigned long long)(tv.tv_sec) * 1000 +
-    //         (unsigned long long)(tv.tv_usec) / 1000;
+    unsigned long long millisecondsSinceEpoch =
+            (unsigned long long)(tv.tv_sec) * 1000 +
+            (unsigned long long)(tv.tv_usec) / 1000;
 
 
     // generate log level string
@@ -96,13 +97,13 @@ char * get_log_message_string(log_level max_log_level, log_level level, char * l
     }
 
     // format timestamp
-    // strftime(timestamp, sizeof(timestamp), "%x|%X", time_info);
+    strftime(timestamp, sizeof(timestamp), "%x|%X", time_info);
 
     // add milliseconds to timestamp
-    // sprintf(timestamp2, "%s (Epoch time: %llu)", timestamp, millisecondsSinceEpoch);
+    sprintf(timestamp2, "%s (Epoch time: %llu)", timestamp, millisecondsSinceEpoch);
 
     char *  msg_string = rmalloc(LOGGER_MAX_MSG_SIZE);
-    sprintf(msg_string, LOG_FORMAT, "", level_str, location, msg_str);
+    sprintf(msg_string, LOG_FORMAT, timestamp2, level_str, location, msg_str);
 
     return msg_string;
 }
