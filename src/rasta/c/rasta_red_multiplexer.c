@@ -320,9 +320,7 @@ void receive_packet(redundancy_mux * mux, int channel_id){
 void * channel_receive_handler(void * arg_wrapper){
     // enable possibility to cancel thread
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
-    // set cancel type to async, i.e. can always be canceled
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct receive_thread_parameter_wrapper * args = (struct receive_thread_parameter_wrapper*)arg_wrapper;
 
@@ -723,6 +721,7 @@ void redundancy_mux_close(redundancy_mux * mux){
     for (int i = 0; i < mux->port_count; ++i) {
         logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux close", "closing udp socket %d/%d", i+1, mux->port_count);
         pthread_cancel(mux->transport_receive_threads[i]);
+        pthread_join(mux->transport_receive_threads[i], NULL);
         udp_close(mux->udp_socket_fds[i]);
     }
 
@@ -734,6 +733,7 @@ void redundancy_mux_close(redundancy_mux * mux){
 
     // cancel the timeout thread
     pthread_cancel(mux->timeout_thread);
+    pthread_join(mux->timeout_thread, NULL);
 
     // close the redundancy channels
     for (int j = 0; j < mux->channel_count; ++j) {

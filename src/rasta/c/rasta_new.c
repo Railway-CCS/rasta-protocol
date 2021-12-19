@@ -1133,7 +1133,7 @@ void * receive_thread(void * handle){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct rasta_receive_handle *h = (struct rasta_receive_handle*)handle;
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Receive thread started");
@@ -1281,7 +1281,7 @@ void * heartbeat_thread(void * handle){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) handle;
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
@@ -1354,7 +1354,7 @@ void * send_thread(void * handle){
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
     // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct rasta_sending_handle *h = (struct rasta_sending_handle*)handle;
 
@@ -1728,12 +1728,17 @@ void sr_cleanup(struct rasta_handle *h) {
 
     // cancel receive thread
     pthread_cancel(h->receive_handle->recv_thread);
+    pthread_join(h->receive_handle->recv_thread, NULL);
 
     // cancel sending thread
     pthread_cancel(h->send_handle->send_thread);
+    pthread_join(h->send_handle->send_thread, NULL);
 
     // cancel hb thread
     pthread_cancel(h->heartbeat_handle->hb_thread);
+    pthread_join(h->heartbeat_handle->hb_thread, NULL);
+
+    logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Cleanup", "Threads joined");
 
     for (int i = 0; i < h->connections.size; i++) {
         struct rasta_connection connection = h->connections.data[i];
