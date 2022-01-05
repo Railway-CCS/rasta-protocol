@@ -17,7 +17,8 @@ typedef char (*event_ptr)();
 typedef struct timed_event {
     event_ptr callback;
     uint64_t interval;
-    uint64_t last_call;
+    uint64_t __last_call;
+    void* carry_data;
 } timed_event;
 
 /**
@@ -26,6 +27,7 @@ typedef struct timed_event {
 typedef struct fd_event {
     event_ptr callback;
     int fd;
+    void* carry_data;
 } fd_event;
 
 /**
