@@ -17,6 +17,7 @@ typedef char (*event_ptr)();
 typedef struct timed_event {
     event_ptr callback;
     uint64_t interval;
+    uint64_t last_call;
 } timed_event;
 
 /**
@@ -36,6 +37,13 @@ typedef struct fd_event {
  * @param fd_events_len the length of the fd event array
  */
 void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event fd_events[], int fd_events_len);
+
+/**
+ * rescedules the event to the current time + the event interval
+ * resulting in a delay of the event
+ * @param event the event to delay
+ */
+void rescedule_event(timed_event* event);
 
 #ifdef __cplusplus
 }

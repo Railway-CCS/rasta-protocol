@@ -42,6 +42,15 @@ int event_system_sleep(uint64_t time_to_wait, fd_event fd_events[], int len) {
 }
 
 /**
+ * rescedules the event to the current time + the event interval
+ * resulting in a delay of the event
+ * @param event the event to delay
+ */
+void rescedule_event(timed_event* event) {
+    event->last_call = get_nanotime();
+}
+
+/**
  * starts an event loop with the given events
  * the events may not be removed while the loop is running but can be modified
  * @param timed_events an array with the looping events to handle
@@ -51,9 +60,8 @@ int event_system_sleep(uint64_t time_to_wait, fd_event fd_events[], int len) {
  */
 void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event fd_events[], int fd_events_len) {
     uint64_t cur_time = get_nanotime();
-    uint64_t last_call[timed_events_len];
     for (int i = 0; i < timed_events_len; i++) {
-        last_call[i] = cur_time;
+        timed_events[i].last_call = cur_time;
     }
     while (1) {
         cur_time = get_nanotime();
@@ -61,7 +69,7 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
         int next_event;
         // find next timed event
         for (int i = 0; i < timed_events_len; i++) {
-            uint64_t continue_at = last_call[i] + timed_events[i].interval;
+            uint64_t continue_at = timed_events[i].last_call + timed_events[i].interval;
             if (continue_at <= cur_time) {
                 time_to_wait = 0;
                 next_event = i;
@@ -86,7 +94,7 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
                 continue;
             }
         }
-        timed_events[next_event].callback(cur_time - last_call[next_event]);
-        last_call[next_event] = cur_time + time_to_wait;
+        if (timed_events[next_event].callback(cur_time - timed_events[next_event].last_call)) break;
+        timed_events[next_event].last_call = cur_time + time_to_wait;
     }
 }
