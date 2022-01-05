@@ -1,35 +1,37 @@
 #include<event_system.h>
 #include<stdio.h>
 #include<unistd.h>
-const uint64_t sleep_time = 1000000;
-const uint64_t interval = 50;
-char was_manipulated = 0;
+const uint64_t interval = 1000 * 1000 * 1000;
+uint64_t last_time;
 
-void event1(struct event_handler_settings* events, uint64_t time_since_last_call) {
-    printf("since last call:%lu ns - expected:%lu ns\n", time_since_last_call, interval * 1000);
-    printf("raw error: %lu ns", time_since_last_call - interval * 1000);
-    if (was_manipulated) {
-        printf(" - error without delay: %lu ns", time_since_last_call - interval - sleep_time);
-        was_manipulated = 0;
-    }
-    printf("\n");
+uint64_t test_get_nanotime() {
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec * 1000000000 + t.tv_nsec;
 }
 
-void event2(struct event_handler_settings* events, uint64_t time_since_last_call) {
-    printf("waiting %lu ns\n", sleep_time);
-    was_manipulated = 1;
-    usleep(sleep_time);
+char event_time() {
+    uint64_t n_time = test_get_nanotime();
+    printf("since last call: %lu ns - expected:%lu ns\n", n_time - last_time, interval);
+    last_time = n_time;
+    return 0;
 }
 
-void event3(struct event_handler_settings* events, uint64_t time_since_last_call) {
-    stop_events(events);
+char event_read() {
+    char buffer[128];
+    ssize_t len = read(STDIN_FILENO, buffer, 127);
+    buffer[len] = 0;
+    printf("detected: %s", buffer);
+    return 0;
 }
 
 int main() {
-    struct event_handler_settings events;
-    init_events(&events);
-    add_event(&events, event1, interval);
-    //add_event(&events, event2, 2400000);
-    //add_event(&events, event3, 1000);
-    start_events(&events);
+    last_time = test_get_nanotime();
+    timed_event t_events[1];
+    t_events[0].callback = event_time;
+    t_events[0].interval = interval;
+    fd_event f_events[1];
+    f_events[0].callback = event_read;
+    f_events[0].fd = STDIN_FILENO;
+    start_event_loop(t_events, 1, f_events, 1);
 }

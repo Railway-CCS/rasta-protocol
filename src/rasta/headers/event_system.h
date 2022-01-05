@@ -3,54 +3,39 @@
 #include"rastahandle.h"
 #include<unistd.h>
 
-#define MAX_EVENT_HANDLER 16
-
 #ifdef __cplusplus
 extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
-struct event_handler_settings;
-
-typedef void (*event_ptr)(struct event_handler_settings* events, uint64_t nano_since_last_call);
-
-struct event_handler_settings {
-    /**
-     * contains the callback function pointer and information about the events
-     */
-    struct {
-        event_ptr callback;
-        uint64_t interval;
-    } events[MAX_EVENT_HANDLER];
-    unsigned int len;
-    char running;
-};
+// event callback pointer, return 0 to keep the loop running, everything else stops the loop
+typedef char (*event_ptr)();
 
 /**
- * intializes a event_handler_settings struct
- * @param events the struct to initialize
+ * contains a function pointer to a callback function and interval in microseconds
  */
-void init_events(struct event_handler_settings* events);
+typedef struct timed_event {
+    event_ptr callback;
+    uint64_t interval;
+} timed_event;
 
 /**
- * starts a blocking loop, handling the events specified
- * @param events the event handler to handle in this loop
+ * contains a function pointer to a callback function and a file descriptor
  */
-void start_events(struct event_handler_settings* events);
+typedef struct fd_event {
+    event_ptr callback;
+    int fd;
+} fd_event;
 
 /**
- * adds a event handler to the specified loop
- * @param callback_function the function that is called
- * @param interval the interval at which the function is called in milliseconds
- * @return 0 if the event could be added 1 if not
+ * starts an event loop with the given events
+ * the events may not be removed while the loop is running, but can be modified
+ * @param timed_events an array with the looping events to handle
+ * @param timed_events_len the length of the timed_event array
+ * @param fd_events an array with the events, that get called whenever the given fd gets readable
+ * @param fd_events_len the length of the fd event array
  */
-int add_event(struct event_handler_settings* events, event_ptr callback_function, unsigned int interval);
-
-/**
- * stops a event system
- * @param events the system to stop
- */
-void stop_events(struct event_handler_settings* events);
+void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event fd_events[], int fd_events_len);
 
 #ifdef __cplusplus
 }
