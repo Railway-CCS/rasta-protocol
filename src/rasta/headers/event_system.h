@@ -1,6 +1,7 @@
-#ifndef MAIN_LOOP_H
-#define MAIN_LOOP_H
-#include"rastahandle.h"
+#ifndef EVENT_LOOP_H
+#define EVENT_LOOP_H
+#include<inttypes.h>
+#include<time.h>
 #include<unistd.h>
 
 #ifdef __cplusplus
@@ -19,6 +20,7 @@ typedef struct timed_event {
     uint64_t interval;
     uint64_t __last_call;
     void* carry_data;
+    char enabled;
 } timed_event;
 
 /**
@@ -26,8 +28,9 @@ typedef struct timed_event {
  */
 typedef struct fd_event {
     event_ptr callback;
-    int fd;
     void* carry_data;
+    int fd;
+    char enabled;
 } fd_event;
 
 /**
@@ -46,6 +49,18 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
  * @param event the event to delay
  */
 void reschedule_event(timed_event* event);
+
+/**
+ * enables a timed event, it will fire in event::interval nanoseconds
+ * @param event the event to enable
+ */
+void enable_timed_event(timed_event* event);
+
+/**
+ * temporarily disables a timed event
+ * @param event the event to disable
+ */
+void disable_timed_event(timed_event* event);
 
 #ifdef __cplusplus
 }
