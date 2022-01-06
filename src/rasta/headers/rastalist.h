@@ -12,6 +12,8 @@ extern "C" {  // only need to export C interface if
 
 #include <pthread.h>
 #include <stdint.h>
+#include <event_system.h>
+#include "event_system.h"
 #include "fifo.h"
 
 typedef enum {
@@ -110,9 +112,14 @@ struct diagnostic_interval {
 struct rasta_connection{
 
     /**
-     * the time when the last data packet or heartbeat was sent
+     * the event operating the heartbeats on this connection
      */
-    uint32_t ts_last_message;
+    timed_event * send_heartbeat_event;
+
+    /**
+     * the event watching the connection timeout
+     */
+    timed_event * timeout_event;
 
     /**
      * 1 if the process for sending heartbeats should be paused, otherwise 0
@@ -122,7 +129,7 @@ struct rasta_connection{
     /**
      * bool value if data from the send buffer is sent right now
      */
-     int is_sending;
+    int is_sending;
 
     /**
      * blocks heartbeats until connection handshake is complete
@@ -183,11 +190,6 @@ struct rasta_connection{
      * relative time used to monitor incoming messages
      */
     unsigned int t_i;
-
-    /**
-     * time (in ms since 1.1.1970) when the T_i interval started
-     */
-    uint32_t ti_start_time;
 
     /**
      * the RaSTA connections sender identifier

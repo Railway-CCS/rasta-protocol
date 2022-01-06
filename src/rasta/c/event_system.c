@@ -69,17 +69,19 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
         int next_event;
         // find next timed event
         for (int i = 0; i < timed_events_len; i++) {
-            uint64_t continue_at = timed_events[i].__last_call + timed_events[i].interval;
-            if (continue_at <= cur_time) {
-                time_to_wait = 0;
-                next_event = i;
-                break;
-            }
-            else {
-                uint64_t new_time_to_wait = continue_at - cur_time;
-                if (new_time_to_wait < time_to_wait) {
+            if (timed_events[i].enabled) {
+                uint64_t continue_at = timed_events[i].__last_call + timed_events[i].interval;
+                if (continue_at <= cur_time) {
+                    time_to_wait = 0;
                     next_event = i;
-                    time_to_wait = new_time_to_wait;
+                    break;
+                }
+                else {
+                    uint64_t new_time_to_wait = continue_at - cur_time;
+                    if (new_time_to_wait < time_to_wait) {
+                        next_event = i;
+                        time_to_wait = new_time_to_wait;
+                    }
                 }
             }
         }
@@ -97,4 +99,23 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
         if (timed_events[next_event].callback(timed_events[next_event].carry_data)) break;
         timed_events[next_event].__last_call = cur_time + time_to_wait;
     }
+}
+
+/**
+ * enables a timed event, it will fire in event::interval nanoseconds
+ * @param event the event to enable
+ */
+void enable_timed_event(timed_event* event) {
+    if (event != NULL);
+    event->enabled = 1;
+    rescedule_event(event);
+}
+
+/**
+ * temporarily disables a timed event
+ * @param event the event to disable
+ */
+void disable_timed_event(timed_event* event) {
+    if (event != NULL);
+    event->enabled = 0;
 }
