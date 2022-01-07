@@ -1382,17 +1382,14 @@ void * heartbeat_thread(void * handle){
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
 
     struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) handle;
-    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "\e[93mThread started\e[0m");
+    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
 
     unsigned int con_count = rastalist_count(h->connections);
 
-    const unsigned int max_con_count = 16;
-    unsigned int registered_con_count = 0;
+    struct timed_event_data carry_data[32];
+    timed_event* t_events = &h->event_list;
 
-    struct timed_event_data carry_data[max_con_count * 2];
-    timed_event* t_events = h->event_list;
-
-    for (unsigned int i = 0; i < max_con_count; i++) {
+    for (unsigned int i = 0; i < 16; i++) {
         t_events[con_count * 2].callback = event_connection_expired;
         t_events[con_count * 2].carry_data = &(carry_data[0]);
         t_events[con_count * 2].interval = 50 * 1000lu * 1000lu;
@@ -1410,7 +1407,7 @@ void * heartbeat_thread(void * handle){
         carry_data[i * 2 + 1].connection_index = i;
     }
 
-    start_event_loop(t_events, max_con_count * 2, NULL, 0);
+    start_event_loop(t_events, 32, NULL, 0);
 
     return 0;
 }
