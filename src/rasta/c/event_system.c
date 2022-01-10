@@ -87,7 +87,10 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
             }
         }
         if (time_to_wait == UINT64_MAX) {
-            nanosleep(&((struct timespec) {0, 1000}), NULL);
+            int result = event_system_sleep(1000, fd_events, fd_events_len);
+            if (result == -1) {
+                break;
+            }
             continue;
         }
         if (time_to_wait != 0) {
@@ -95,9 +98,9 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
             if (result == -1) {
                 break;
             }
-            else if (result > 0) {
+            else if (result >= 0) {
                 // the sleep didn't time out, but a fd event occured
-                // recalculate next timed event in case it got resceduled
+                // recalculate next timed event in case one got resceduled
                 continue;
             }
         }
