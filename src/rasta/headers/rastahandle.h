@@ -186,8 +186,6 @@ struct rasta_heartbeat_handle {
      * The paramenters that are used for SR checksums
      */
     rasta_hashing_context_t * hashing_context;
-
-    timed_event event_list[32];
 };
 
 struct rasta_receive_handle {

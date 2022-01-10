@@ -173,7 +173,7 @@ void send_Heartbeat(redundancy_mux *mux, struct rasta_connection * connection, c
 
     connection->sn_t = connection->sn_t +1;
     if (rescedule_manually) {
-        rescedule_event(&connection->send_heartbeat_event);
+        rescedule_event(connection->send_heartbeat_event);
     }
 }
 
@@ -214,7 +214,7 @@ void updateTI(long confirmed_timestamp, struct rasta_connection * con, struct Ra
     con->t_i = (uint32_t )(cfg.t_max - t_rtd);
 
     // update the timeout start time
-    rescedule_event(&con->timeout_event);
+    rescedule_event(con->timeout_event);
 }
 
 void resetDiagnostic(struct rasta_connection * connection) {
@@ -588,7 +588,7 @@ void sr_retransmit_data(struct rasta_receive_handle *h, struct rasta_connection 
         connection->sn_t = connection->sn_t +1;
 
         // set last message ts
-        rescedule_event(&connection->send_heartbeat_event);
+        rescedule_event(connection->send_heartbeat_event);
 
         // free allocated memory of current packet
         freeRastaByteArray(&packets[i]);
@@ -600,9 +600,19 @@ void sr_retransmit_data(struct rasta_receive_handle *h, struct rasta_connection 
     send_Heartbeat(h->mux,connection, 1);
 }
 
-void register_connection(struct rasta_heartbeat_handle * h, int id, struct rasta_connection* connection) {
-    connection->timeout_event = &(h->event_list[id * 2]);
-    connection->send_heartbeat_event = &(h->event_list[id * 2 + 1]);
+struct timed_event_data {
+    void * handle;
+    int connection_index;
+};
+
+#define MAX_CONNECTIONS_SUPPORTED 4
+timed_event t_events[MAX_CONNECTIONS_SUPPORTED * 2];
+struct timed_event_data carry_data[MAX_CONNECTIONS_SUPPORTED * 2];
+
+void register_connection(int id, struct rasta_connection* connection) {
+    printf("\e[93mconnection registered with id: %d\e[0m\n", id);
+    connection->timeout_event = &(t_events[id * 2]);
+    connection->send_heartbeat_event = &(t_events[id * 2 + 1]);
 }
 
 /*
@@ -693,7 +703,7 @@ void handle_conreq(struct rasta_receive_handle *h, struct rasta_connection *conn
                 fire_on_connection_state_change(sr_create_notification_result(h->handle, con_ptr));
                 logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: ConnectionRequest", "Add new client %d", receivedPacket.sender_id);
 
-                register_connection(h, id, con_ptr);
+                register_connection(id, con_ptr);
             }
 
             logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Send Connection Response - waiting for Heartbeat");
@@ -762,15 +772,17 @@ void handle_conresp(struct rasta_receive_handle *h, struct rasta_connection *con
                 // fire handshake complete event
                 fire_on_handshake_complete(sr_create_notification_result(h->handle, connection));
 
+                register_connection(connection->my_id, connection);
+
                 // start sending heartbeats
-                enable_timed_event(&connection->send_heartbeat_event);
+                enable_timed_event(connection->send_heartbeat_event);
                 connection->hb_locked = 0;
 
                 // save the N_SENDMAX of remote
                 connection->connected_recv_buffer_size = connectionData.send_max;
 
                 // arm the timeout timer
-                enable_timed_event(&connection->timeout_event);
+                enable_timed_event(connection->timeout_event);
 
             } else {
                 // version not accepted -> disconnect
@@ -858,10 +870,10 @@ void handle_hb(struct rasta_receive_handle *h, struct rasta_connection *connecti
             fire_on_handshake_complete(sr_create_notification_result(h->handle, connection));
 
             // start sending heartbeats
-            enable_timed_event(&connection->send_heartbeat_event);
+            enable_timed_event(connection->send_heartbeat_event);
 
             // arm the timeout timer
-            enable_timed_event(&connection->timeout_event);
+            enable_timed_event(connection->timeout_event);
             return;
         } else{
             logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: Heartbeat", "Heartbeat is invalid");
@@ -1286,12 +1298,6 @@ void * receive_thread(void * handle){
     return 0;
 }
 
-struct timed_event_data {
-    timed_event * event;
-    void * handle;
-    int connection_index;
-};
-
 char event_connection_expired(void * carry_data) {
     struct timed_event_data * data = carry_data;
     struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) data->handle;
@@ -1300,12 +1306,6 @@ char event_connection_expired(void * carry_data) {
     //because its multithreaded, count can get wrong
     struct rasta_connection * connection = rastalist_getConnection(h->connections, data->connection_index);
     //so check if connection is valid
-
-    if (connection == NULL) {
-        //connection doesn't exist anymore
-        disable_timed_event(data->event);
-        return 0;
-    }
 
     pthread_mutex_lock(&connection->lock);
 
@@ -1320,33 +1320,28 @@ char event_connection_expired(void * carry_data) {
         || connection->current_state == RASTA_CONNECTION_RETRREQ
         || connection->current_state == RASTA_CONNECTION_RETRRUN) {
 
-        unsigned long current_time = cur_timestamp();
-
         // fire heartbeat timeout event
         fire_on_hearbeat_timeout(sr_create_notification_result(h->handle, connection));
 
         // T_i expired -> close connection
         sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_TIMEOUT, 0);
+        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "T_i timer expired - \e[91mdisconnected\e[0m");
     }
 
     pthread_mutex_unlock(&connection->lock);
 
+    disable_timed_event(connection->send_heartbeat_event);
+    disable_timed_event(connection->timeout_event);
     return 0;
 }
 
 char heartbeat_send_event(void * carry_data) {
+    printf("\e[93msend heartbeat\e[0m\n");
     struct timed_event_data * data = carry_data;
     struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) data->handle;
 
     //because its multithreaded, count can get wrong
     struct rasta_connection * connection = rastalist_getConnection(h->connections, data->connection_index);
-    //so check if connection is valid
-
-    if (connection == NULL) {
-        //connection doesn't exist anymore
-        disable_timed_event(data->event);
-        return 0;
-    }
 
     pthread_mutex_lock(&connection->lock);
 
@@ -1386,28 +1381,23 @@ void * heartbeat_thread(void * handle){
 
     unsigned int con_count = rastalist_count(h->connections);
 
-    struct timed_event_data carry_data[32];
-    timed_event* t_events = &h->event_list;
-
-    for (unsigned int i = 0; i < 16; i++) {
-        t_events[con_count * 2].callback = event_connection_expired;
-        t_events[con_count * 2].carry_data = &(carry_data[0]);
-        t_events[con_count * 2].interval = 50 * 1000lu * 1000lu;
-        t_events[con_count * 2].enabled = 0;
-        carry_data[i * 2].handle = NULL;
-        carry_data[i * 2].event = &(t_events[con_count * 2]);
+    for (int i = 0; i < MAX_CONNECTIONS_SUPPORTED; i++) {
+        t_events[i * 2].callback = event_connection_expired;
+        t_events[i * 2].carry_data = &(carry_data[i * 2]);
+        t_events[i * 2].interval = 50 * 1000lu * 1000lu;
+        t_events[i * 2].enabled = 0;
+        carry_data[i * 2].handle = handle;
         carry_data[i * 2].connection_index = i;
 
-        t_events[con_count * 2 + 1].callback = heartbeat_send_event;
-        t_events[con_count * 2 + 1].carry_data = &(carry_data[1]);
-        t_events[con_count * 2 + 1].interval = h->config.t_h;
-        t_events[con_count * 2 + 1].enabled = 0;
-        carry_data[i * 2 + 1].handle = NULL;
-        carry_data[i * 2 + 1].event = &(t_events[con_count * 2 + 1]);
+        t_events[i * 2 + 1].callback = heartbeat_send_event;
+        t_events[i * 2 + 1].carry_data = &(carry_data[i * 2 + 1]);
+        t_events[i * 2 + 1].interval = h->config.t_h * 1000;
+        t_events[i * 2 + 1].enabled = 0;
+        carry_data[i * 2 + 1].handle = handle;
         carry_data[i * 2 + 1].connection_index = i;
     }
 
-    start_event_loop(t_events, 32, NULL, 0);
+    start_event_loop(t_events, MAX_CONNECTIONS_SUPPORTED * 2, NULL, 0);
 
     return 0;
 }
@@ -1500,7 +1490,7 @@ void * send_thread(void * handle){
                     connection->sn_t = data.sequence_number + 1;
 
                     // set last message ts
-                    rescedule_event(&connection->send_heartbeat_event);
+                    rescedule_event(connection->send_heartbeat_event);
 
                     connection->hb_stopped = 0;
 
@@ -1697,7 +1687,7 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
     // fire connection state changed event
     fire_on_connection_state_change(sr_create_notification_result(handle,con));
     
-    register_connection(handle->heartbeat_handle, con_id, con);
+    register_connection(con_id, con);
 }
 
 void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessageData app_messages){

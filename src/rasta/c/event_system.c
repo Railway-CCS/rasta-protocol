@@ -47,6 +47,7 @@ int event_system_sleep(uint64_t time_to_wait, fd_event fd_events[], int len) {
  * @param event the event to delay
  */
 void rescedule_event(timed_event * event) {
+    printf("\e[96mevent at %p resceduled\e[0m\n", event);
     event->__last_call = get_nanotime();
 }
 
@@ -85,6 +86,10 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
                 }
             }
         }
+        if (time_to_wait == UINT64_MAX) {
+            nanosleep(&((struct timespec) {0, 1000}), NULL);
+            continue;
+        }
         if (time_to_wait != 0) {
             int result = event_system_sleep(time_to_wait, fd_events, fd_events_len);
             if (result == -1) {
@@ -106,7 +111,7 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
  * @param event the event to enable
  */
 void enable_timed_event(timed_event* event) {
-    if (event != NULL);
+    printf("\e[92menabled event %p\e[0m\n", event);
     event->enabled = 1;
     rescedule_event(event);
 }
@@ -116,6 +121,6 @@ void enable_timed_event(timed_event* event) {
  * @param event the event to disable
  */
 void disable_timed_event(timed_event* event) {
-    if (event != NULL);
+    printf("\e[93mdisabled event %p\e[0m\n", event);
     event->enabled = 0;
 }
