@@ -614,10 +614,13 @@ void register_connection(int id, struct rasta_connection* connection) {
  */
 
 
-void handle_conreq(struct rasta_receive_handle *h, struct rasta_connection *connection, struct RastaPacket receivedPacket) {
+struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int connection_id, struct RastaPacket receivedPacket) {
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Received ConnectionRequest from %d", receivedPacket.sender_id);
     //struct rasta_connection* con = rastalist_getConnectionByRemote(&h->connections, receivedPacket.sender_id);
-
+    struct rasta_connection * connection = rastalist_getConnection(h->connections, connection_id);
+    if (connection) {
+        pthread_mutex_lock(&connection->lock);
+    }
     if (connection == 0 || connection->current_state == RASTA_CONNECTION_CLOSED || connection->current_state == RASTA_CONNECTION_DOWN) {
         //new client
         if (connection == 0) {
@@ -642,7 +645,10 @@ void handle_conreq(struct rasta_receive_handle *h, struct rasta_connection *conn
         if (!sr_check_packet(&new_con,h->logger,h->config,receivedPacket, "RaSTA HANDLE: ConnectionRequest")){
             logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Packet is not valid");
             sr_close_connection(&new_con,h->handle,h->mux,h->info,RASTA_DISC_REASON_PROTOCOLERROR,0);
-            return;
+            if (connection) {
+                pthread_mutex_unlock(&connection->lock);
+            }
+            return connection;
         }
 
 
@@ -708,13 +714,19 @@ void handle_conreq(struct rasta_receive_handle *h, struct rasta_connection *conn
         else {
             logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: ConnectionRequest", "Version unacceptable - sending DisconnectionRequest");
             sr_close_connection(&new_con,h->handle,h->mux,h->info,RASTA_DISC_REASON_INCOMPATIBLEVERSION,0);
-            return;
+            if (connection) {
+                pthread_mutex_unlock(&connection->lock);
+            }
+            return connection;
         }
     }
     else {
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Connection is in invalid state (%d) send DisconnectionRequest",connection->current_state);
         sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE,0);
 
+    }
+    if (connection) {
+        pthread_mutex_unlock(&connection->lock);
     }
 }
 
@@ -766,6 +778,7 @@ void handle_conresp(struct rasta_receive_handle *h, struct rasta_connection *con
                 // fire handshake complete event
                 fire_on_handshake_complete(sr_create_notification_result(h->handle, connection));
 
+                //my_id is not what I want
                 register_connection(connection->my_id, connection);
 
                 // start sending heartbeats
@@ -1165,18 +1178,11 @@ void * receive_thread(void * handle){
 
 
 
-        struct rasta_connection * con = rastalist_getConnectionByRemote(h->connections, receivedPacket.sender_id);
-
+        int con_id = rastalist_getConnectionId(h->connections, receivedPacket.sender_id);
+        struct rasta_connection* con;
         //new client request
         if (receivedPacket.type == RASTA_TYPE_CONNREQ){
-            if (con != 0) {
-                pthread_mutex_lock(&con->lock);
-                handle_conreq(h,con,receivedPacket);
-                pthread_mutex_unlock(&con->lock);
-
-            } else {
-                handle_conreq(h,0,receivedPacket);
-            }
+            con = handle_conreq(h, con_id,receivedPacket);
 
             freeRastaByteArray(&receivedPacket.data);
             continue;
