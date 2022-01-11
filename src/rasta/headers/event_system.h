@@ -57,10 +57,22 @@ void rescedule_event(timed_event* event);
 void enable_timed_event(timed_event* event);
 
 /**
- * temporarily disables a timed event
+ * enables a fd event
+ * @param event the event to enable
+ */
+void enable_fd_event(fd_event* event);
+
+/**
+ * disables a timed event
  * @param event the event to disable
  */
 void disable_timed_event(timed_event* event);
+
+/**
+ * enables a fd event
+ * @param event the event to enable
+ */
+void disable_fd_event(fd_event* event);
 
 #ifdef __cplusplus
 }

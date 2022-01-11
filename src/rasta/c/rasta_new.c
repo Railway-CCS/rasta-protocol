@@ -1369,39 +1369,6 @@ char heartbeat_send_event(void * carry_data) {
     return 0;
 }
 
-void * heartbeat_thread(void * handle){
-    // enable the possibility to cancel this thread
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
-    // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-
-    struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) handle;
-    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
-
-    unsigned int con_count = rastalist_count(h->connections);
-
-    for (int i = 0; i < MAX_CONNECTIONS_SUPPORTED; i++) {
-        t_events[i * 2].callback = event_connection_expired;
-        t_events[i * 2].carry_data = &(carry_data[i * 2]);
-        t_events[i * 2].interval = h->config.t_max * 1000lu * 1000lu;
-        t_events[i * 2].enabled = 0;
-        carry_data[i * 2].handle = handle;
-        carry_data[i * 2].connection_index = i;
-
-        t_events[i * 2 + 1].callback = heartbeat_send_event;
-        t_events[i * 2 + 1].carry_data = &(carry_data[i * 2 + 1]);
-        t_events[i * 2 + 1].interval = h->config.t_h * 1000lu * 1000lu;
-        t_events[i * 2 + 1].enabled = 0;
-        carry_data[i * 2 + 1].handle = handle;
-        carry_data[i * 2 + 1].connection_index = i;
-    }
-
-    start_event_loop(t_events, MAX_CONNECTIONS_SUPPORTED * 2, NULL, 0);
-
-    return 0;
-}
-
 void * send_thread(void * handle){
     // enable the possibility to cancel this thread
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
@@ -1531,25 +1498,6 @@ void sr_start_receiving(struct rasta_receive_handle *handle){
 
 }
 
-/**
- * start the thread that periodically sends heartbeats
- * @param connection the connection which will be used
- */
-void sr_start_heartbeats(struct rasta_heartbeat_handle *handle){
-    pthread_t hb_thread;
-
-    if(*handle->running) return;
-
-    *handle->running = 1;
-
-    if (pthread_create(&hb_thread, NULL, heartbeat_thread, handle)){
-        logger_log(handle->logger, LOG_LEVEL_ERROR, "RaSTA start heartbeats", "error while creating thread");
-        exit(1);
-    }
-
-    handle->hb_thread = hb_thread;
-}
-
 void sr_start_sending(struct rasta_sending_handle *handle){
 
     pthread_t sd_thread;
@@ -1579,8 +1527,6 @@ void sr_start(struct rasta_handle *handle) {
     //start threads
     logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE_INIT", "Start receiving");
     sr_start_receiving(handle->receive_handle);
-    logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE_INIT", "Start heartbeats");
-    sr_start_heartbeats(handle->heartbeat_handle);
     logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE_INIT", "Start sending");
     sr_start_sending(handle->send_handle);
 }
@@ -1789,10 +1735,6 @@ void sr_cleanup(struct rasta_handle *h) {
     pthread_cancel(h->send_handle->send_thread);
     pthread_join(h->send_handle->send_thread, NULL);
 
-    // cancel hb thread
-    pthread_cancel(h->heartbeat_handle->hb_thread);
-    pthread_join(h->heartbeat_handle->hb_thread, NULL);
-
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Cleanup", "Threads joined");
 
     for (int i = 0; i < h->connections.size; i++) {
@@ -1837,8 +1779,30 @@ void sr_cleanup(struct rasta_handle *h) {
 
     sleep(1);
     logger_destroy(&h->logger);
+}
 
+void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
+    logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
 
+    unsigned int con_count = rastalist_count(&h->connections);
+
+    for (int i = 0; i < MAX_CONNECTIONS_SUPPORTED; i++) {
+        t_events[i * 2].callback = event_connection_expired;
+        t_events[i * 2].carry_data = &(carry_data[i * 2]);
+        t_events[i * 2].interval = h->heartbeat_handle->config.t_max * 1000000lu;
+        t_events[i * 2].enabled = 0;
+        carry_data[i * 2].handle = h->heartbeat_handle;
+        carry_data[i * 2].connection_index = i;
+
+        t_events[i * 2 + 1].callback = heartbeat_send_event;
+        t_events[i * 2 + 1].carry_data = &(carry_data[i * 2 + 1]);
+        t_events[i * 2 + 1].interval = h->heartbeat_handle->config.t_h * 1000000lu;
+        t_events[i * 2 + 1].enabled = 0;
+        carry_data[i * 2 + 1].handle = h->heartbeat_handle;
+        carry_data[i * 2 + 1].connection_index = i;
+    }
+
+    start_event_loop(t_events, MAX_CONNECTIONS_SUPPORTED * 2, extern_fd_events, len);
 }
 
 
