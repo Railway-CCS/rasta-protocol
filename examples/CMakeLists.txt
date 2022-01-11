@@ -14,6 +14,10 @@ if(BUILD_LOCAL_EXAMPLES)
             localhost/c/rasta.c)
     target_link_libraries(rasta_example_local rasta)
 
+    add_executable(event_system_example_local
+            localhost/c/event_test.c)
+    target_link_libraries(event_system_example_local rasta)
+
     # Copy RaSTA configs to build directory
     configure_file(../config/rasta_server_local.cfg ../rasta_server_local.cfg COPYONLY)
     configure_file(../config/rasta_client1_local.cfg ../rasta_client1_local.cfg COPYONLY)
