@@ -47,7 +47,6 @@ int event_system_sleep(uint64_t time_to_wait, fd_event fd_events[], int len) {
  * @param event the event to delay
  */
 void reschedule_event(timed_event * event) {
-    printf("\e[96mevent at %p resceduled\e[0m\n", event);
     event->__last_call = get_nanotime();
 }
 
@@ -114,7 +113,6 @@ void start_event_loop(timed_event timed_events[], int timed_events_len, fd_event
  * @param event the event to enable
  */
 void enable_timed_event(timed_event* event) {
-    printf("\e[92menabled event %p\e[0m\n", event);
     event->enabled = 1;
     reschedule_event(event);
 }
@@ -124,6 +122,5 @@ void enable_timed_event(timed_event* event) {
  * @param event the event to disable
  */
 void disable_timed_event(timed_event* event) {
-    printf("\e[93mdisabled event %p\e[0m\n", event);
     event->enabled = 0;
 }
