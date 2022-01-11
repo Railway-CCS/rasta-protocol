@@ -23,6 +23,7 @@ add_library(rasta SHARED
         # RaSTA headers
         src/rasta/headers/config.h
         src/rasta/headers/dictionary.h
+        src/rasta/headers/event_system.h
         src/rasta/headers/fifo.h
         src/rasta/headers/logging.h
         src/rasta/headers/rasta_new.h
@@ -52,6 +53,7 @@ add_library(rasta SHARED
         # RaSTA sources
         src/rasta/c/config.c
         src/rasta/c/dictionary.c
+        src/rasta/c/event_system.c
         src/rasta/c/fifo.c
         src/rasta/c/logging.c
         src/rasta/c/rasta_new.c
@@ -118,6 +120,10 @@ if(BUILD_LOCAL_EXAMPLES)
 	add_executable(rasta_example_local
 		    src/examples_localhost/c/rasta.c)
 	target_link_libraries(rasta_example_local rasta)
+
+	add_executable(event_system_example_local
+                src/examples_localhost/c/event_test.c)
+        target_link_libraries(event_system_example_local rasta)
 	
 	# Copy RaSTA configs to build directory
 	configure_file(config/rasta_server_local.cfg rasta_server_local.cfg COPYONLY)
