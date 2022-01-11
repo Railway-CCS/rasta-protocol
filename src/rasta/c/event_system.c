@@ -26,7 +26,11 @@ int event_system_sleep(uint64_t time_to_wait, fd_event fd_events[], int len) {
     // set the fd to watch
     fd_set on_readable;
     FD_ZERO(&on_readable);
-    for (int i = 0; i < len; i++) FD_SET(fd_events[i].fd, &on_readable);
+    for (int i = 0; i < len; i++) {
+        if (fd_events[i].enabled) {
+            FD_SET(fd_events[i].fd, &on_readable);
+        }
+    }
     // wait
     int result = select(nfds + 1, &on_readable, NULL, NULL, &tv);
     if (result == -1) {
@@ -34,7 +38,7 @@ int event_system_sleep(uint64_t time_to_wait, fd_event fd_events[], int len) {
         return -1;
     }
     for (int i = 0; i < len; i++) {
-        if (FD_ISSET(fd_events[i].fd, &on_readable)) {
+        if (fd_events[i].enabled && FD_ISSET(fd_events[i].fd, &on_readable)) {
             if (fd_events[i].callback(fd_events[i].carry_data)) return -1;
         }
     }
@@ -122,5 +126,21 @@ void enable_timed_event(timed_event* event) {
  * @param event the event to disable
  */
 void disable_timed_event(timed_event* event) {
+    event->enabled = 0;
+}
+
+/**
+ * enables a fd event
+ * @param event the event to enable
+ */
+void enable_fd_event(fd_event* event) {
+    event->enabled = 1;
+}
+
+/**
+ * enables a fd event
+ * @param event the event to enable
+ */
+void disable_fd_event(fd_event* event) {
     event->enabled = 0;
 }

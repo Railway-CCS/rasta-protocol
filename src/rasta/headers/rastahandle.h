@@ -181,8 +181,6 @@ struct rasta_heartbeat_handle {
 
     int *running;
 
-    pthread_t hb_thread;
-
     /**
      * The paramenters that are used for SR checksums
      */

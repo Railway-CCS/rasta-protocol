@@ -13,6 +13,7 @@ extern "C" {  // only need to export C interface if
 //TODO: check
 //#include <errno.h>
 #include "rastahandle.h"
+#include "event_system.h"
 
 /**
  * size of ring buffer where data is hold for retransmissions
@@ -149,6 +150,8 @@ void sr_disconnect(struct rasta_handle *h, unsigned long remote_id);
  * @param h
  */
 void sr_cleanup(struct rasta_handle *h);
+
+void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len);
 
 #ifdef __cplusplus
 }
