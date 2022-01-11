@@ -150,8 +150,6 @@ struct rasta_sending_handle {
 
     int *running;
 
-    pthread_t send_thread;
-
     /**
      * The paramenters that are used for SR checksums
      */
