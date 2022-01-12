@@ -511,8 +511,6 @@ void sr_diagnostic_interval_init(struct rasta_connection * connection, struct Ra
 }
 
 void sr_init_connection(struct rasta_connection* connection, unsigned long id, struct RastaConfigInfoGeneral info, struct RastaConfigInfoSending cfg, struct logger_t *logger, rasta_role role) {
-    pthread_mutex_init(&connection->lock, NULL);
-
     sr_reset_connection(connection,id,info);
     connection->role = role;
 
@@ -606,8 +604,9 @@ struct timed_event_data {
 };
 
 #define MAX_CONNECTIONS_SUPPORTED 4
-timed_event t_events[MAX_CONNECTIONS_SUPPORTED * 3];
-struct timed_event_data carry_data[MAX_CONNECTIONS_SUPPORTED * 3];
+#define EVENTS_PER_CONNECTION 4
+timed_event t_events[MAX_CONNECTIONS_SUPPORTED * EVENTS_PER_CONNECTION];
+struct timed_event_data carry_data[MAX_CONNECTIONS_SUPPORTED * EVENTS_PER_CONNECTION];
 
 void register_connection(int id, struct rasta_connection* connection) {
     connection->timeout_event = &(t_events[id * 2]);
@@ -623,9 +622,6 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Received ConnectionRequest from %d", receivedPacket.sender_id);
     //struct rasta_connection* con = rastalist_getConnectionByRemote(&h->connections, receivedPacket.sender_id);
     struct rasta_connection * connection = rastalist_getConnection(h->connections, connection_id);
-    if (connection) {
-        pthread_mutex_lock(&connection->lock);
-    }
     if (connection == 0 || connection->current_state == RASTA_CONNECTION_CLOSED || connection->current_state == RASTA_CONNECTION_DOWN) {
         //new client
         if (connection == 0) {
@@ -650,9 +646,6 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
         if (!sr_check_packet(&new_con,h->logger,h->config,receivedPacket, "RaSTA HANDLE: ConnectionRequest")){
             logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Packet is not valid");
             sr_close_connection(&new_con,h->handle,h->mux,h->info,RASTA_DISC_REASON_PROTOCOLERROR,0);
-            if (connection) {
-                pthread_mutex_unlock(&connection->lock);
-            }
             return connection;
         }
 
@@ -720,9 +713,6 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
         else {
             logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: ConnectionRequest", "Version unacceptable - sending DisconnectionRequest");
             sr_close_connection(&new_con,h->handle,h->mux,h->info,RASTA_DISC_REASON_INCOMPATIBLEVERSION,0);
-            if (connection) {
-                pthread_mutex_unlock(&connection->lock);
-            }
             return connection;
         }
     }
@@ -730,9 +720,6 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Connection is in invalid state (%d) send DisconnectionRequest",connection->current_state);
         sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE,0);
 
-    }
-    if (connection) {
-        pthread_mutex_unlock(&connection->lock);
     }
 }
 
@@ -1163,145 +1150,118 @@ void handle_retrdata(struct rasta_receive_handle *h, struct rasta_connection *co
 /*
  * threads
  */
-void * receive_thread(void * handle){
-    // enable the possibility to cancel this thread
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
-    // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
+char on_readable_event(void * handle) {
+    struct rasta_receive_handle *h = (struct rasta_receive_handle*) handle;
 
-    struct rasta_receive_handle *h = (struct rasta_receive_handle*)handle;
-    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Receive thread started");
-
-    // run as long as the running flag is set to true
-    while (*h->running){
-        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Waiting for incoming packets...");
-
-        // wait for incoming packets
-        struct RastaPacket receivedPacket = redundancy_mux_retrieve_all(h->mux);
-
-        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Received packet %d from %d to %d", receivedPacket.type, receivedPacket.sender_id, receivedPacket.receiver_id);
-
-
-
-        int con_id = rastalist_getConnectionId(h->connections, receivedPacket.sender_id);
-        struct rasta_connection* con;
-        //new client request
-        if (receivedPacket.type == RASTA_TYPE_CONNREQ){
-            con = handle_conreq(h, con_id,receivedPacket);
-
-            freeRastaByteArray(&receivedPacket.data);
-            continue;
-        }
-
-        con = rastalist_getConnection(h->connections, con_id);
-        if (con == NULL) {
-            logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Received packet (%d) from unknown source %d", receivedPacket.type, receivedPacket.sender_id);
-            //received packet from unknown source
-            //TODO: can these packets be ignored?
-
-            freeRastaByteArray(&receivedPacket.data);
-            continue;
-        }
-
-        //lock this connection
-        pthread_mutex_lock(&con->lock);
-
-        //handle response
-        if (receivedPacket.type == RASTA_TYPE_CONNRESP) {
-            handle_conresp(h, con_id, receivedPacket);
-            pthread_mutex_unlock(&con->lock);
-
-            freeRastaByteArray(&receivedPacket.data);
-            continue;
-        }
-
-
-        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Checking packet ...");
-
-        // check message checksum
-        if (!receivedPacket.checksum_correct){
-            logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet checksum incorrect");
-            // increase safety error counter
-            con->errors.safety++;
-            pthread_mutex_unlock(&con->lock);
-
-            freeRastaByteArray(&receivedPacket.data);
-            continue;
-        }
-
-        // check for plausible ids
-        if (!sr_message_authentic(con, receivedPacket)) {
-            logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet invalid sender/receiver");
-            // increase address error counter
-            con->errors.address++;
-            pthread_mutex_unlock(&con->lock);
-
-            freeRastaByteArray(&receivedPacket.data);
-            continue;
-        }
-
-        // check sequency number range
-        if (!sr_sn_range_valid(con, h->config, receivedPacket)){
-            logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet sn range invalid");
-
-            // invalid -> increase error counter and discard packet
-            con->errors.sn++;
-            pthread_mutex_unlock(&con->lock);
-
-            freeRastaByteArray(&receivedPacket.data);
-            continue;
-        }
-
-        // check confirmed sequence number
-        if (!sr_cs_valid(con, receivedPacket)){
-            logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet cs invalid");
-
-            // invalid -> increase error counter and discard packet
-            con->errors.cs++;
-            pthread_mutex_unlock(&con->lock);
-
-            freeRastaByteArray(&receivedPacket.data);
-            continue;
-        }
-
-        switch (receivedPacket.type){
-            case RASTA_TYPE_RETRDATA:
-                handle_retrdata(h,con, receivedPacket);
-                break;
-            case RASTA_TYPE_DATA:
-                handle_data(h,con, receivedPacket);
-                break;
-            case RASTA_TYPE_RETRREQ:
-                handle_retrreq(h,con, receivedPacket);
-                break;
-            case RASTA_TYPE_RETRRESP:
-                handle_retrresp(h,con, receivedPacket);
-                break;
-            case RASTA_TYPE_DISCREQ:
-                handle_discreq(h,con, receivedPacket);
-                break;
-            case RASTA_TYPE_HB:
-                handle_hb(h,con, receivedPacket);
-                break;
-            default:
-                logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received unexpected packet type %d", receivedPacket.type);
-                // increase type error counter
-                con->errors.type++;
-                break;
-        }
-
-        pthread_mutex_unlock(&con->lock);
-
-        freeRastaByteArray(&receivedPacket.data);
-
-        // to avoid to much CPU utilization, force context switch by sleeping for 0ns
-        usleep(10000);
-        //nanosleep((const struct timespec[]){{0, 0L}}, NULL);
+    // wait for incoming packets
+    struct RastaPacket receivedPacket;
+    if (!redundancy_mux_try_retrieve_all(h->mux, &receivedPacket)) {
+        return 0;
     }
 
-    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA receive", "exiting recv thread");
-    return 0;
+    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Received packet %d from %d to %d", receivedPacket.type, receivedPacket.sender_id, receivedPacket.receiver_id);
+
+    int con_id = rastalist_getConnectionId(h->connections, receivedPacket.sender_id);
+    struct rasta_connection* con;
+    //new client request
+    if (receivedPacket.type == RASTA_TYPE_CONNREQ){
+        con = handle_conreq(h, con_id,receivedPacket);
+
+        freeRastaByteArray(&receivedPacket.data);
+        return 0;
+    }
+
+    con = rastalist_getConnection(h->connections, con_id);
+    if (con == NULL) {
+        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Received packet (%d) from unknown source %d", receivedPacket.type, receivedPacket.sender_id);
+        //received packet from unknown source
+        //TODO: can these packets be ignored?
+
+        freeRastaByteArray(&receivedPacket.data);
+        return 0;
+    }
+
+    //handle response
+    if (receivedPacket.type == RASTA_TYPE_CONNRESP) {
+        handle_conresp(h, con_id, receivedPacket);
+
+        freeRastaByteArray(&receivedPacket.data);
+        return 0;
+    }
+
+
+    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA RECEIVE", "Checking packet ...");
+
+    // check message checksum
+    if (!receivedPacket.checksum_correct){
+        logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet checksum incorrect");
+        // increase safety error counter
+        con->errors.safety++;
+
+        freeRastaByteArray(&receivedPacket.data);
+        return 0;
+    }
+
+    // check for plausible ids
+    if (!sr_message_authentic(con, receivedPacket)) {
+        logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet invalid sender/receiver");
+        // increase address error counter
+        con->errors.address++;
+
+        freeRastaByteArray(&receivedPacket.data);
+        return 0;
+    }
+
+    // check sequency number range
+    if (!sr_sn_range_valid(con, h->config, receivedPacket)){
+        logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet sn range invalid");
+
+        // invalid -> increase error counter and discard packet
+        con->errors.sn++;
+
+        freeRastaByteArray(&receivedPacket.data);
+        return 0;
+    }
+
+    // check confirmed sequence number
+    if (!sr_cs_valid(con, receivedPacket)){
+        logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received packet cs invalid");
+
+        // invalid -> increase error counter and discard packet
+        con->errors.cs++;
+
+        freeRastaByteArray(&receivedPacket.data);
+        return 0;
+    }
+
+    switch (receivedPacket.type){
+        case RASTA_TYPE_RETRDATA:
+            handle_retrdata(h,con, receivedPacket);
+            break;
+        case RASTA_TYPE_DATA:
+            handle_data(h,con, receivedPacket);
+            break;
+        case RASTA_TYPE_RETRREQ:
+            handle_retrreq(h,con, receivedPacket);
+            break;
+        case RASTA_TYPE_RETRRESP:
+            handle_retrresp(h,con, receivedPacket);
+            break;
+        case RASTA_TYPE_DISCREQ:
+            handle_discreq(h,con, receivedPacket);
+            break;
+        case RASTA_TYPE_HB:
+            handle_hb(h,con, receivedPacket);
+            break;
+        default:
+            logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA RECEIVE", "Received unexpected packet type %d", receivedPacket.type);
+            // increase type error counter
+            con->errors.type++;
+            break;
+    }
+
+    freeRastaByteArray(&receivedPacket.data);
 }
 
 char event_connection_expired(void * carry_data) {
@@ -1313,10 +1273,8 @@ char event_connection_expired(void * carry_data) {
     struct rasta_connection * connection = rastalist_getConnection(h->connections, data->connection_index);
     //so check if connection is valid
 
-    pthread_mutex_lock(&connection->lock);
 
     if (connection->hb_locked) {
-        pthread_mutex_unlock(&connection->lock);
         return 0;
     }
 
@@ -1334,8 +1292,6 @@ char event_connection_expired(void * carry_data) {
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "T_i timer expired - \e[91mdisconnected\e[0m");
     }
 
-    pthread_mutex_unlock(&connection->lock);
-
     disable_timed_event(connection->send_heartbeat_event);
     disable_timed_event(connection->timeout_event);
     return 0;
@@ -1347,10 +1303,8 @@ char heartbeat_send_event(void * carry_data) {
 
     struct rasta_connection * connection = rastalist_getConnection(h->connections, data->connection_index);
 
-    pthread_mutex_lock(&connection->lock);
 
     if (connection->hb_locked) {
-        pthread_mutex_unlock(&connection->lock);
         return 0;
     }
 
@@ -1364,7 +1318,6 @@ char heartbeat_send_event(void * carry_data) {
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Heartbeat sent to %d", connection->remote_id);
     }
 
-    pthread_mutex_unlock(&connection->lock);
     return 0;
 }
 
@@ -1379,10 +1332,8 @@ char data_send_event(void * carry_data) {
 
         if (connection == NULL) continue;
 
-        pthread_mutex_lock(&connection->lock);
 
         if (connection->current_state == RASTA_CONNECTION_DOWN || connection->current_state == RASTA_CONNECTION_CLOSED) {
-            pthread_mutex_unlock(&connection->lock);
             continue;
         }
 
@@ -1457,48 +1408,8 @@ char data_send_event(void * carry_data) {
             }
         }
 
-        pthread_mutex_unlock(&connection->lock);
         usleep(50);
     }
-}
-
-void * send_thread(void * handle){
-    // enable the possibility to cancel this thread
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
-    // set type to async mode, i.e the thread will be cancelled as soon as pthread_cancel is called
-    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-
-    struct rasta_sending_handle *h = (struct rasta_sending_handle*)handle;
-
-    logger_log(h->logger,LOG_LEVEL_DEBUG,"RaSTA send handler", "Sending thread started");
-
-    timed_event send_event;
-    send_event.callback = data_send_event;
-    send_event.interval = 10000 * 1000lu;
-    send_event.enabled = 1;
-    send_event.carry_data = h;
-
-    start_event_loop(&send_event, 1, NULL, 0);
-
-    logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA send handler", "exiting send thread");
-    return 0;
-}
-
-void sr_start_receiving(struct rasta_receive_handle *handle){
-    pthread_t recv_thread;
-
-    if (*handle->running) return;
-
-    *handle->running = 1;
-
-    if (pthread_create(&recv_thread, NULL, receive_thread, handle)){
-        logger_log(handle->logger, LOG_LEVEL_ERROR, "RaSTA start receive", "error while creating thread");
-        exit(1);
-    }
-
-    handle->recv_thread = recv_thread;
-
 }
 
 /*
@@ -1509,10 +1420,6 @@ void sr_start(struct rasta_handle *handle) {
     //open mux
     logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE_INIT", "Open Mux");
     redundancy_mux_open(&handle->mux);
-
-    //start threads
-    logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE_INIT", "Start receiving");
-    sr_start_receiving(handle->receive_handle);
 }
 
 void sr_init_handle_manually(struct rasta_handle *handle, struct RastaConfigInfo configuration, struct DictionaryArray accepted_version, struct logger_t logger) {
@@ -1561,10 +1468,6 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
     sr_start(handle);
 
 }
-
-
-
-
 
 void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPData *channels) {
 
@@ -1626,15 +1529,12 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
 
     if (connection == 0) return;
 
-    pthread_mutex_lock(&connection->lock);
-
     if(connection->current_state == RASTA_CONNECTION_UP){
         if (app_messages.count > h->config.values.sending.max_packet){
             // to many application messages
             logger_log(&h->logger, LOG_LEVEL_ERROR, "RaSTA send", "too many application messages to send in one packet. Maximum is %d",
                        h->config.values.sending.max_packet);
             // do nothing and leave method with error code 2
-            pthread_mutex_unlock(&connection->lock);
             return;
         }
 
@@ -1668,10 +1568,8 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
         fire_on_connection_state_change(sr_create_notification_result(h,connection));
 
         // leave with error code 1
-        pthread_mutex_unlock(&connection->lock);
         return;
     }
-    pthread_mutex_unlock(&connection->lock);
 }
 
 rastaApplicationMessage sr_get_received_data(struct rasta_handle *h, struct rasta_connection * connection){
@@ -1699,9 +1597,7 @@ void sr_disconnect(struct rasta_handle *h, unsigned long remote_id) {
 
     if (con == 0) return;
 
-    pthread_mutex_lock(&con->lock);
     sr_close_connection(con,h,&h->mux,h->config.values.general,RASTA_DISC_REASON_USERREQUEST,0);
-    pthread_mutex_unlock(&con->lock);
 }
 
 void sr_cleanup(struct rasta_handle *h) {
@@ -1710,10 +1606,6 @@ void sr_cleanup(struct rasta_handle *h) {
     h->hb_running = 0;
     h->recv_running = 0;
     h->send_running = 0;
-
-    // cancel receive thread
-    pthread_cancel(h->receive_handle->recv_thread);
-    pthread_join(h->receive_handle->recv_thread, NULL);
 
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Cleanup", "Threads joined");
 
@@ -1761,33 +1653,40 @@ void sr_cleanup(struct rasta_handle *h) {
     logger_destroy(&h->logger);
 }
 
+#define IO_INTERVAL 10000
 void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
 
     unsigned int con_count = rastalist_count(&h->connections);
 
     for (int i = 0; i < MAX_CONNECTIONS_SUPPORTED; i++) {
-        t_events[i * 3].callback = event_connection_expired;
-        t_events[i * 3].carry_data = &(carry_data[i * 2]);
-        t_events[i * 3].interval = h->heartbeat_handle->config.t_max * 1000000lu;
-        t_events[i * 3].enabled = 0;
-        carry_data[i * 3].handle = h->heartbeat_handle;
-        carry_data[i * 3].connection_index = i;
+        t_events[i * EVENTS_PER_CONNECTION].callback = event_connection_expired;
+        t_events[i * EVENTS_PER_CONNECTION].carry_data = &(carry_data[i * 2]);
+        t_events[i * EVENTS_PER_CONNECTION].interval = h->heartbeat_handle->config.t_max * 1000000lu;
+        t_events[i * EVENTS_PER_CONNECTION].enabled = 0;
+        carry_data[i * EVENTS_PER_CONNECTION].handle = h->heartbeat_handle;
+        carry_data[i * EVENTS_PER_CONNECTION].connection_index = i;
 
-        t_events[i * 3 + 1].callback = heartbeat_send_event;
-        t_events[i * 3 + 1].carry_data = &(carry_data[i * 2 + 1]);
-        t_events[i * 3 + 1].interval = h->heartbeat_handle->config.t_h * 1000000lu;
-        t_events[i * 3 + 1].enabled = 0;
-        carry_data[i * 3 + 1].handle = h->heartbeat_handle;
-        carry_data[i * 3 + 1].connection_index = i;
+        t_events[i * EVENTS_PER_CONNECTION + 1].callback = heartbeat_send_event;
+        t_events[i * EVENTS_PER_CONNECTION + 1].carry_data = &(carry_data[i * EVENTS_PER_CONNECTION + 1]);
+        t_events[i * EVENTS_PER_CONNECTION + 1].interval = h->heartbeat_handle->config.t_h * 1000000lu;
+        t_events[i * EVENTS_PER_CONNECTION + 1].enabled = 0;
+        carry_data[i * EVENTS_PER_CONNECTION + 1].handle = h->heartbeat_handle;
+        carry_data[i * EVENTS_PER_CONNECTION + 1].connection_index = i;
 
-        t_events[i * 3 + 2].callback = data_send_event;
-        t_events[i * 3 + 2].interval = 10000 * 1000lu;
-        t_events[i * 3 + 2].enabled = 1;
-        t_events[i * 3 + 2].carry_data = h->send_handle;
+        // busy io events TODO: move to a position so it is only called when needed
+        t_events[i * EVENTS_PER_CONNECTION + 2].callback = data_send_event;
+        t_events[i * EVENTS_PER_CONNECTION + 2].interval = IO_INTERVAL * 1000lu;
+        t_events[i * EVENTS_PER_CONNECTION + 2].enabled = 1;
+        t_events[i * EVENTS_PER_CONNECTION + 2].carry_data = h->send_handle;
+
+        t_events[i * EVENTS_PER_CONNECTION + 3].callback = on_readable_event;
+        t_events[i * EVENTS_PER_CONNECTION + 3].interval = IO_INTERVAL * 1000lu;
+        t_events[i * EVENTS_PER_CONNECTION + 3].enabled = 1;
+        t_events[i * EVENTS_PER_CONNECTION + 3].carry_data = h->receive_handle;
     }
 
-    start_event_loop(t_events, MAX_CONNECTIONS_SUPPORTED * 3, extern_fd_events, len);
+    start_event_loop(t_events, MAX_CONNECTIONS_SUPPORTED * EVENTS_PER_CONNECTION, extern_fd_events, len);
 }
 
 

@@ -227,11 +227,6 @@ struct rasta_connection{
     *   the error counters as specified in 5.5.5
     */
     struct rasta_error_counters errors;
-
-    /**
-     * allow access to specific connection cross thread
-     */
-    pthread_mutex_t lock;
 };
 
 struct RastaList {
@@ -239,8 +234,6 @@ struct RastaList {
 
     unsigned int size;
     unsigned int actual_size;
-
-    pthread_mutex_t list_lock;
 };
 
 /**

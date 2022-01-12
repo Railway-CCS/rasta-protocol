@@ -172,6 +172,7 @@ struct connect_event_data {
 };
 
 char connect_on_stdin(void * carry_data) {
+    printf("try to connect\n");
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 
