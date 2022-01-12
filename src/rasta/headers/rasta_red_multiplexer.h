@@ -190,7 +190,7 @@ void redundancy_mux_send(redundancy_mux * mux, struct RastaPacket data);
  * @param id the RaSTA ID of the entity whose message is retrieved
  * @return the oldest (i.e. the PDU that arrived first) SR layer PDU in the receive buffer of the redundacy channel
  */
-struct RastaPacket redundancy_mux_retrieve(redundancy_mux * mux, unsigned long id);
+int redundancy_try_mux_retrieve(redundancy_mux * mux, unsigned long id, struct RastaPacket * out);
 
 /**
  * blocks until all notification threads are finished
@@ -227,7 +227,7 @@ void redundancy_mux_remove_channel(redundancy_mux * mux, unsigned long channel_i
  * @param mux the multiplexer that is used
  * @return a packet that was received in any of the connected redundancy channels
  */
-struct RastaPacket redundancy_mux_retrieve_all(redundancy_mux * mux);
+int redundancy_mux_try_retrieve_all(redundancy_mux * mux, struct RastaPacket* out);
 
 #ifdef __cplusplus
 }

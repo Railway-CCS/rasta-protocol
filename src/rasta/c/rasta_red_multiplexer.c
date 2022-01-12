@@ -817,31 +817,21 @@ void redundancy_mux_send(redundancy_mux * mux, struct RastaPacket data){
     logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA Red send", "Data sent over all transport channels");
 }
 
-struct RastaPacket redundancy_mux_retrieve(redundancy_mux * mux, unsigned long id){
+int redundancy_try_mux_retrieve(redundancy_mux * mux, unsigned long id, struct RastaPacket * out) {
     // get the channel by id
     rasta_redundancy_channel * target = redundancy_mux_get_channel(mux, id);
 
     if (target == NULL){
-        logger_log(&mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux retrieve", "entity with id 0x%lX not connected, waiting...", id);
-    }
-
-    // if ID is unknown, wait until available
-    while (target == NULL){
-        target = redundancy_mux_get_channel(mux, id);
-
-        usleep(100000);
-        // to avoid to much CPU utilization, force context switch by sleeping for 0ns
-        //nanosleep((const struct timespec[]){{0, 0L}}, NULL);
+        logger_log(&mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux retrieve", "entity with id 0x%lX not connected, passing", id);
+        return 0;
     }
 
     struct RastaByteArray * element;
 
-    // busy wait for data in FIFO
-    while (fifo_get_size(target->fifo_recv) == 0){
-        // to avoid to much CPU utilization, force context switch by sleeping for 0ns
-        usleep(10000);
-        //nanosleep((const struct timespec[]){{0, 0L}}, NULL);
+    if (fifo_get_size(target->fifo_recv) == 0) {
+        return 0;
     }
+    
 
     logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux retrieve", "Found element in queue");
 
@@ -852,7 +842,8 @@ struct RastaPacket redundancy_mux_retrieve(redundancy_mux * mux, unsigned long i
     freeRastaByteArray(element);
     rfree(element);
 
-    return packet;
+    *out = packet;
+    return 1;
 }
 
 void redundancy_mux_wait_for_notifications(redundancy_mux * mux){
@@ -961,27 +952,13 @@ unsigned int get_queue_msg_count(redundancy_mux * mux, int redundancy_channel_in
     return size;
 }
 
-struct RastaPacket redundancy_mux_retrieve_all(redundancy_mux * mux){
-    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux retrieve all", "waiting for message on any connection");
-    int current_index = 0;
-    while (1){
-        if (mux->channel_count == 0){
-            // if no channel are connected yet, do noting until a channel is available
-            usleep(100000);
-            continue;
+int redundancy_mux_try_retrieve_all(redundancy_mux * mux, struct RastaPacket* out) {
+    for (int i = 0; i < mux->channel_count; i++) {
+        if (get_queue_msg_count(mux, i) > 0){
+            logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux retrieve all", "channel with index %d has messages", i);
+            redundancy_try_mux_retrieve(mux, mux->connected_channels[i].associated_id, out);
+            return 1;
         }
-
-        if (current_index == (int)mux->channel_count){
-            current_index = 0;
-        }
-
-        if (get_queue_msg_count(mux, current_index) > 0){
-            logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux retrieve all", "channel with index %d has messages", current_index);
-            return redundancy_mux_retrieve(mux, mux->connected_channels[current_index].associated_id);
-        }
-
-        current_index++;
-        // to avoid to much CPU utilization, force context switch by sleeping for 0ns
-        nanosleep((const struct timespec[]){{0, 0L}}, NULL);
     }
+    return 0;
 }

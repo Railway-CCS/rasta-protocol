@@ -209,8 +209,6 @@ struct rasta_receive_handle {
 
     int *running;
 
-    pthread_t recv_thread;
-
     /**
      * The paramenters that are used for SR checksums
      */
@@ -220,19 +218,19 @@ struct rasta_receive_handle {
 
 struct rasta_handle {
     /**
-    * the receiving thread
+    * the receiving data
     */
     struct rasta_receive_handle *receive_handle;
     int recv_running;
 
     /**
-     * the sending thread
+     * the sending data
      */
     struct rasta_sending_handle *send_handle;
     int send_running;
 
     /**
-     * the heartbeat thread
+     * the heartbeat data
      */
     struct rasta_heartbeat_handle *heartbeat_handle;
     int hb_running;
