@@ -121,7 +121,7 @@ add_library(rasta SHARED
         src/sci/c/scip_telegram_factory.c
         )
 # Link system libraries for librasta
-target_link_libraries(rasta rt pthread)
+target_link_libraries(rasta rt)
 
 set_property(
     TARGET rasta

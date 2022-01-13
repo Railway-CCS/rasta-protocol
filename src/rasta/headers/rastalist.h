@@ -10,7 +10,6 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
-#include <pthread.h>
 #include <stdint.h>
 #include "event_system.h"
 #include "fifo.h"

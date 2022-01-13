@@ -1,6 +1,7 @@
 #include "fifo.h"
 
 #include "rmemory.h"
+#include <stdlib.h>
 
 fifo_t * fifo_init(unsigned int max_size){
     fifo_t * fifo = rmalloc(sizeof(fifo_t));
@@ -10,13 +11,10 @@ fifo_t * fifo_init(unsigned int max_size){
     fifo->head = NULL;
     fifo->tail = NULL;
 
-    pthread_mutex_init(&fifo->lock, NULL);
-
     return fifo;
 }
 
 void * fifo_pop(fifo_t * fifo){
-    pthread_mutex_lock(&fifo->lock);
     void * res= NULL;
 
     if (fifo->size > 0 && fifo->head != NULL && fifo->tail != NULL){
@@ -32,7 +30,6 @@ void * fifo_pop(fifo_t * fifo){
         fifo->size--;
     }
 
-    pthread_mutex_unlock(&fifo->lock);
     return res;
 }
 
@@ -41,10 +38,7 @@ void fifo_push(fifo_t * fifo, void * element){
         return;
     }
 
-    pthread_mutex_lock(&fifo->lock);
-
     if (fifo->size == fifo->max_size){
-        pthread_mutex_unlock(&fifo->lock);
         return;
     }
 
@@ -61,14 +55,10 @@ void fifo_push(fifo_t * fifo, void * element){
     }
 
     fifo->size++;
-
-    pthread_mutex_unlock(&fifo->lock);
 }
 
 unsigned int fifo_get_size(fifo_t * fifo){
-    pthread_mutex_lock(&fifo->lock);
     unsigned int size = fifo->size;
-    pthread_mutex_unlock(&fifo->lock);
 
     return size;
 }
@@ -78,6 +68,5 @@ void fifo_destroy(fifo_t * fifo){
         fifo_pop(fifo);
     }
 
-    pthread_mutex_destroy(&fifo->lock);
     rfree(fifo);
 }
