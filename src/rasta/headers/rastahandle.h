@@ -11,7 +11,6 @@ extern "C" {  // only need to export C interface if
 #endif
 
 #include <mqueue.h>
-#include <pthread.h>
 #include "rastalist.h"
 #include <rastahashing.h>
 //TODO: check
@@ -243,8 +242,6 @@ struct rasta_handle {
      *
      */
     int running_notifications;
-
-    pthread_mutex_t notification_lock;
 
     /**
     * the logger which is used to log protocol activities
