@@ -82,7 +82,7 @@ add_library(rasta SHARED
         src/sci/c/scip_telegram_factory.c
         )
 # Link system libraries for librasta
-target_link_libraries(rasta rt pthread)
+target_link_libraries(rasta rt)
 
 # if USE_OPENSSL parameter is passed to cmake or if architecture is ARM -> use openssl md4 implementation
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm" OR ${USE_OPENSSL})
