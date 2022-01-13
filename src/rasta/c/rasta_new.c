@@ -605,8 +605,10 @@ struct timed_event_data {
 
 #define MAX_CONNECTIONS_SUPPORTED 4
 #define EVENTS_PER_CONNECTION 4
-timed_event t_events[MAX_CONNECTIONS_SUPPORTED * EVENTS_PER_CONNECTION];
-struct timed_event_data carry_data[MAX_CONNECTIONS_SUPPORTED * EVENTS_PER_CONNECTION];
+#define CONNECTION_EVENTS MAX_CONNECTIONS_SUPPORTED * EVENTS_PER_CONNECTION
+#define OTHER_EVENTS 1
+timed_event t_events[CONNECTION_EVENTS + OTHER_EVENTS];
+struct timed_event_data carry_data[CONNECTION_EVENTS + OTHER_EVENTS];
 
 void register_connection(int id, struct rasta_connection* connection) {
     connection->timeout_event = &(t_events[id * 2]);
@@ -1412,16 +1414,6 @@ char data_send_event(void * carry_data) {
     }
 }
 
-/*
- * Initialize Protocol
- */
-
-void sr_start(struct rasta_handle *handle) {
-    //open mux
-    logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE_INIT", "Open Mux");
-    redundancy_mux_open(&handle->mux);
-}
-
 void sr_init_handle_manually(struct rasta_handle *handle, struct RastaConfigInfo configuration, struct DictionaryArray accepted_version, struct logger_t logger) {
     rasta_handle_manually_init(handle,configuration,accepted_version, logger);
 
@@ -1437,9 +1429,6 @@ void sr_init_handle_manually(struct rasta_handle *handle, struct RastaConfigInfo
                    handle->config.values.sending.md4_b,
                    handle->config.values.sending.md4_c,
                    handle->config.values.sending.md4_d);*/
-
-
-    sr_start(handle);
 }
 
 void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
@@ -1463,10 +1452,6 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
     handle->hashing_context.hash_length = handle->config.values.sending.md4_type;
     rasta_md4_set_key(&handle->hashing_context, handle->config.values.sending.md4_a, handle->config.values.sending.md4_b,
                       handle->config.values.sending.md4_c, handle->config.values.sending.md4_d);
-
-
-    sr_start(handle);
-
 }
 
 void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPData *channels) {
@@ -1654,39 +1639,75 @@ void sr_cleanup(struct rasta_handle *h) {
 }
 
 #define IO_INTERVAL 10000
+void init_connection_events(timed_event * t_events, int connection_index, struct rasta_handle * h) {
+    int i = connection_index;
+    t_events[0].callback = event_connection_expired;
+    t_events[0].carry_data = &(carry_data[i * 2]);
+    t_events[0].interval = h->heartbeat_handle->config.t_max * 1000000lu;
+    t_events[0].enabled = 0;
+    carry_data[i * EVENTS_PER_CONNECTION].handle = h->heartbeat_handle;
+    carry_data[i * EVENTS_PER_CONNECTION].connection_index = i;
+
+    t_events[1].callback = heartbeat_send_event;
+    t_events[1].carry_data = &(carry_data[i * EVENTS_PER_CONNECTION + 1]);
+    t_events[1].interval = h->heartbeat_handle->config.t_h * 1000000lu;
+    t_events[1].enabled = 0;
+    carry_data[i * EVENTS_PER_CONNECTION + 1].handle = h->heartbeat_handle;
+    carry_data[i * EVENTS_PER_CONNECTION + 1].connection_index = i;
+
+    // busy wait like io events TODO: move to a position so it is only called when needed
+    t_events[2].callback = data_send_event;
+    t_events[2].interval = IO_INTERVAL * 1000lu;
+    t_events[2].enabled = 1;
+    t_events[2].carry_data = h->send_handle;
+
+    t_events[3].callback = on_readable_event;
+    t_events[3].interval = IO_INTERVAL * 1000lu;
+    t_events[3].enabled = 1;
+    t_events[3].carry_data = h->receive_handle;
+}
+
 void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
 
     unsigned int con_count = rastalist_count(&h->connections);
 
     for (int i = 0; i < MAX_CONNECTIONS_SUPPORTED; i++) {
-        t_events[i * EVENTS_PER_CONNECTION].callback = event_connection_expired;
-        t_events[i * EVENTS_PER_CONNECTION].carry_data = &(carry_data[i * 2]);
-        t_events[i * EVENTS_PER_CONNECTION].interval = h->heartbeat_handle->config.t_max * 1000000lu;
-        t_events[i * EVENTS_PER_CONNECTION].enabled = 0;
-        carry_data[i * EVENTS_PER_CONNECTION].handle = h->heartbeat_handle;
-        carry_data[i * EVENTS_PER_CONNECTION].connection_index = i;
+        init_connection_events(t_events + i * EVENTS_PER_CONNECTION, i, h);
+    }
+    struct timeout_event_data timeout_data;
+    init_timeout_events(t_events + CONNECTION_EVENTS, &timeout_data, &h->mux);
 
-        t_events[i * EVENTS_PER_CONNECTION + 1].callback = heartbeat_send_event;
-        t_events[i * EVENTS_PER_CONNECTION + 1].carry_data = &(carry_data[i * EVENTS_PER_CONNECTION + 1]);
-        t_events[i * EVENTS_PER_CONNECTION + 1].interval = h->heartbeat_handle->config.t_h * 1000000lu;
-        t_events[i * EVENTS_PER_CONNECTION + 1].enabled = 0;
-        carry_data[i * EVENTS_PER_CONNECTION + 1].handle = h->heartbeat_handle;
-        carry_data[i * EVENTS_PER_CONNECTION + 1].connection_index = i;
-
-        // busy io events TODO: move to a position so it is only called when needed
-        t_events[i * EVENTS_PER_CONNECTION + 2].callback = data_send_event;
-        t_events[i * EVENTS_PER_CONNECTION + 2].interval = IO_INTERVAL * 1000lu;
-        t_events[i * EVENTS_PER_CONNECTION + 2].enabled = 1;
-        t_events[i * EVENTS_PER_CONNECTION + 2].carry_data = h->send_handle;
-
-        t_events[i * EVENTS_PER_CONNECTION + 3].callback = on_readable_event;
-        t_events[i * EVENTS_PER_CONNECTION + 3].interval = IO_INTERVAL * 1000lu;
-        t_events[i * EVENTS_PER_CONNECTION + 3].enabled = 1;
-        t_events[i * EVENTS_PER_CONNECTION + 3].carry_data = h->receive_handle;
+    int channel_event_data_len = h->mux.port_count;
+    fd_event channel_events[channel_event_data_len];
+    struct receive_event_data channel_event_data[channel_event_data_len];
+    for (int i = 0; i < channel_event_data_len; i++) {
+        channel_events[i].enabled = 1;
+        channel_events[i].callback = channel_receive_event;
+        channel_events[i].carry_data = channel_event_data + i;
+        channel_events[i].fd = h->mux.udp_socket_fds[i];
+        channel_event_data[i].channel_index = i;
+        channel_event_data[i].event = channel_events + i;
+        channel_event_data[i].h = h;
     }
 
-    start_event_loop(t_events, MAX_CONNECTIONS_SUPPORTED * EVENTS_PER_CONNECTION, extern_fd_events, len);
+    timed_event* t_event_ptr_arr[CONNECTION_EVENTS + OTHER_EVENTS];
+    fd_event* fd_event_ptr_arr[len + channel_event_data_len];
+    for (int i = 0; i < CONNECTION_EVENTS; i++) {
+        t_event_ptr_arr[i] = &(t_events[i]);
+    }
+    for (int i = 0; i < OTHER_EVENTS; i++) {
+        t_event_ptr_arr[CONNECTION_EVENTS + i] = &(t_events[CONNECTION_EVENTS + i]);
+    }
+
+    for (int i = 0; i < len; i++) {
+        fd_event_ptr_arr[i] = &(extern_fd_events[i]);
+    }
+    for (int i = 0; i < channel_event_data_len; i++) {
+        fd_event_ptr_arr[len + i] = &(channel_events[i]);
+    }
+
+    start_event_loop(t_event_ptr_arr, CONNECTION_EVENTS + OTHER_EVENTS, fd_event_ptr_arr, len + channel_event_data_len);
 }
 
 
