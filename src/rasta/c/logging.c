@@ -141,20 +141,20 @@ void logger_log(struct logger_t * logger, log_level level, char* location, char*
         // log level to low
         return;
     }
-    if (message != NULL){
+    if (msg != NULL){
         logger_type type = logger->type;
         char * file = logger->log_file;
 
         if (type == LOGGER_TYPE_CONSOLE){
             // log to console
-            log_to_console(message);
+            log_to_console(msg);
         } else if (type == LOGGER_TYPE_FILE){
             // log to file
-            log_to_file(message, file);
+            log_to_file(msg, file);
         } else if (type == LOGGER_TYPE_BOTH){
             // log to console and file
-            log_to_console(message);
-            log_to_file(message, file);
+            log_to_console(msg);
+            log_to_file(msg, file);
         }
     }
 }
