@@ -11,7 +11,7 @@ model {
     binaries{
 
         all{
-            linker.args "-lrt", "-lpthread"
+            linker.args "-lrt"
         }
     }
 
