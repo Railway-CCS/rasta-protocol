@@ -69,7 +69,7 @@ void deferqueue_add(struct defer_queue * queue, struct RastaRedundancyPacket pac
     queue->elements[queue->count] = element;
 
     // increase count
-    queue->count = queue->count + 1;
+    queue->count++;
 
     // sort array
     sort(queue);

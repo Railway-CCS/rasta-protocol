@@ -120,11 +120,17 @@ void onReceive(struct rasta_notification_result *result) {
 
             unsigned long target;
             if (p.id == ID_S1) {
-                while (client2) {sleep(1);}
+                if (client2) {
+                    // other client not connected
+                    return;
+                }
                 target = ID_S2;
             }
             else {
-                while (client1) {sleep(1);}
+                if (client1) {
+                    // other client not connected
+                    return;
+                }
                 target = ID_S1;
             }
 
