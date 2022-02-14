@@ -81,6 +81,8 @@ void* red_on_new_connection_caller(void * wrapper){
 
     // free the memory of the wrapper;
     rfree(wrapper);
+
+    return NULL;
 }
 
 /**
@@ -130,6 +132,8 @@ void* red_on_diagnostic_caller(void * wrapper){
 
     // free the memory of the wrapper;
     rfree(wrapper);
+
+    return NULL;
 }
 
 /**
@@ -409,6 +413,8 @@ void * channel_receive_handler(void * arg_wrapper){
 
     // free memory of arg wrapper that has been allocated in rasta_redundancy_open
     rfree(arg_wrapper);
+
+    return NULL;
 }
 
 /**
@@ -470,6 +476,8 @@ void * channel_timeout_handler(void* mux){
     }
 
     logger_log(&mx->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux timeout thread", "Timeout thread stopped");
+
+    return NULL;
 }
 
 /* ----------------------------*/

@@ -258,7 +258,7 @@ int parser_parseArray(struct LineParser *p, struct DictionaryArray * array) {
  * @param key
  * @return
  */
-int parser_parseValue(struct LineParser *p, const char key[256]) {
+void parser_parseValue(struct LineParser *p, const char key[256]) {
     //skip empty start
     parser_skipBlanc(p);
 
