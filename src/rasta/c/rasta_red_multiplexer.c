@@ -238,7 +238,7 @@ void receive_packet(redundancy_mux * mux, int channel_id){
 
     // find assiociated redundancy channel
     pthread_mutex_lock(&mux->lock);
-    for (int i = 0; i < mux->channel_count; ++i) {
+    for (unsigned int i = 0; i < mux->channel_count; ++i) {
         if (receivedPacket.data.sender_id == mux->connected_channels[i].associated_id){
             // found redundancy channel with associated id
             // need to check if redundancy channel already knows ip & port of sender
@@ -248,7 +248,7 @@ void receive_packet(redundancy_mux * mux, int channel_id){
 
                 int is_channel_saved= 0;
 
-                for (int j = 0; j < channel.connected_channel_count; ++j) {
+                for (unsigned int j = 0; j < channel.connected_channel_count; ++j) {
                     if (channel.connected_channels[j].port == connected_channel.port &&
                         strcmp(connected_channel.ip_address, channel.connected_channels[j].ip_address) == 0){
                         // channel is already saved
@@ -341,7 +341,7 @@ void * channel_receive_handler(void * arg_wrapper){
         unsigned int mux_channel_count = args->mux->channel_count;
         pthread_mutex_unlock(&args->mux->lock);
 
-        for (int i = 0; i < mux_channel_count; ++i) {
+        for (unsigned int i = 0; i < mux_channel_count; ++i) {
             pthread_mutex_lock(&args->mux->lock);
             rasta_redundancy_channel current = args->mux->connected_channels[i];
             int n_diagnose = args->mux->config.redundancy.n_diagnose;
@@ -432,7 +432,7 @@ void * channel_timeout_handler(void* mux){
         unsigned int mux_channel_count = mx->channel_count;
         pthread_mutex_unlock(&mx->lock);
 
-        for (int i = 0; i < mux_channel_count; ++i) {
+        for (unsigned int i = 0; i < mux_channel_count; ++i) {
             pthread_mutex_lock(&mx->lock);
             rasta_redundancy_channel current_channel = mx->connected_channels[i];
             pthread_mutex_unlock(&mx->lock);
@@ -508,7 +508,7 @@ redundancy_mux redundancy_mux_init_(struct logger_t logger, struct RastaConfigIn
         logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "loading listen from config");
 
         mux.listen_ports = rmalloc(sizeof(uint16_t) * mux.config.redundancy.connections.count);
-        for (int j = 0; j < mux.config.redundancy.connections.count; ++j) {
+        for (unsigned int j = 0; j < mux.config.redundancy.connections.count; ++j) {
             // init socket
             mux.udp_socket_fds[j] = udp_init();
 
@@ -565,7 +565,7 @@ redundancy_mux redundancy_mux_init(struct logger_t logger, uint16_t * listen_por
     mux.transport_receive_threads = rmalloc(port_count * sizeof(pthread_t));
 
     // set up udp sockets
-    for (int i = 0; i < port_count; ++i) {
+    for (unsigned int i = 0; i < port_count; ++i) {
         logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "setting up udp socket %d/%d", i+1,port_count);
         mux.udp_socket_fds[i] = udp_init();
         udp_bind(mux.udp_socket_fds[i], listen_ports[i]);
@@ -585,7 +585,7 @@ redundancy_mux redundancy_mux_init(struct logger_t logger, uint16_t * listen_por
         rasta_redundancy_channel new_channel = rasta_red_init(mux.logger, mux.config, mux.port_count, mux.config.general.rasta_id);
         new_channel.associated_id = 0x0;
 
-        for (int j = 0; j < mux.config.redundancy.connections.count; ++j) {
+        for (unsigned int j = 0; j < mux.config.redundancy.connections.count; ++j) {
             logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "setting up transport channel %d/%d",
                        j+1, mux.config.redundancy.connections.count);
             logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "transport channel: ip=%s, port=%d",
@@ -626,7 +626,7 @@ redundancy_mux redundancy_mux_init_with_devices(struct logger_t logger, struct R
     mux.transport_receive_threads = rmalloc(port_count * sizeof(pthread_t));
 
     // set up udp sockets
-    for (int i = 0; i < port_count; ++i) {
+    for (unsigned int i = 0; i < port_count; ++i) {
         logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "setting up udp socket %d/%d", i+1,port_count);
         mux.udp_socket_fds[i] = udp_init();
         udp_bind_device(mux.udp_socket_fds[i], (uint16_t)listen_ports[i].port, listen_ports[i].ip);
@@ -646,7 +646,7 @@ redundancy_mux redundancy_mux_init_with_devices(struct logger_t logger, struct R
         rasta_redundancy_channel new_channel = rasta_red_init(mux.logger, mux.config, mux.port_count, mux.config.general.rasta_id);
         new_channel.associated_id = 0x0;
 
-        for (int j = 0; j < mux.config.redundancy.connections.count; ++j) {
+        for (unsigned int j = 0; j < mux.config.redundancy.connections.count; ++j) {
             logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "setting up transport channel %d/%d",
                        j+1, mux.config.redundancy.connections.count);
             logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "transport channel: ip=%s, port=%d",
@@ -678,7 +678,7 @@ void redundancy_mux_open(redundancy_mux * mux){
     mux->is_open = 1;
 
     // start receive threads for transport channels
-    for (int i = 0; i < mux->port_count; ++i) {
+    for (unsigned int i = 0; i < mux->port_count; ++i) {
         logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux open",
                    "opening transport channel %d/%d", i+1, mux->port_count);
 
@@ -718,7 +718,7 @@ void redundancy_mux_close(redundancy_mux * mux){
     mux->is_open = 0;
 
     // close the sockets of the transport channels
-    for (int i = 0; i < mux->port_count; ++i) {
+    for (unsigned int i = 0; i < mux->port_count; ++i) {
         logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux close", "closing udp socket %d/%d", i+1, mux->port_count);
         pthread_cancel(mux->transport_receive_threads[i]);
         pthread_join(mux->transport_receive_threads[i], NULL);
@@ -736,7 +736,7 @@ void redundancy_mux_close(redundancy_mux * mux){
     pthread_join(mux->timeout_thread, NULL);
 
     // close the redundancy channels
-    for (int j = 0; j < mux->channel_count; ++j) {
+    for (unsigned int j = 0; j < mux->channel_count; ++j) {
         logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux close", "cleanup connected channel %d/%d", j+1, mux->channel_count);
         rasta_red_cleanup(&mux->connected_channels[j]);
     }
@@ -749,7 +749,7 @@ void redundancy_mux_close(redundancy_mux * mux){
 
 rasta_redundancy_channel * redundancy_mux_get_channel(redundancy_mux * mux, unsigned long id){
     // iterate over all known channels
-    for (int i = 0; i < mux->channel_count; ++i) {
+    for (unsigned int i = 0; i < mux->channel_count; ++i) {
         // check if channel id == wanted id
         if (mux->connected_channels[i].associated_id == id){
             return &mux->connected_channels[i];
@@ -791,7 +791,7 @@ void redundancy_mux_send(redundancy_mux * mux, struct RastaPacket data){
 
     // send on every transport channels
     rasta_transport_channel channel;
-    for (int i = 0; i < receiver->connected_channel_count; ++i) {
+    for (unsigned int i = 0; i < receiver->connected_channel_count; ++i) {
         logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "Sending on transport channel %d/%d",
                    i+1, receiver->connected_channel_count);
 
@@ -876,7 +876,7 @@ void redundancy_mux_add_channel(redundancy_mux * mux, unsigned long id, struct R
     rasta_redundancy_channel channel = rasta_red_init(mux->logger, mux->config, mux->port_count, id);
 
     // add transport channels
-    for (int i = 0; i < mux->port_count; ++i) {
+    for (unsigned int i = 0; i < mux->port_count; ++i) {
         rasta_red_add_transport_channel(&channel, transport_channels[i].ip, (uint16_t)transport_channels[i].port);
     }
 
@@ -904,7 +904,7 @@ void redundancy_mux_remove_channel(redundancy_mux * mux, unsigned long channel_i
     rasta_redundancy_channel * new_channels = rmalloc((mux->channel_count -1) * sizeof(rasta_redundancy_channel));
 
     int newIndex = 0;
-    for (int i = 0; i < mux->channel_count; ++i) {
+    for (unsigned int i = 0; i < mux->channel_count; ++i) {
         rasta_redundancy_channel c = mux->connected_channels[i];
 
         if (c.associated_id == channel_id){
