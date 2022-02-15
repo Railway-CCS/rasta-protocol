@@ -136,7 +136,6 @@ void packFields(struct RastaByteArray result, struct RastaPacket packet) {
 
 
 struct RastaByteArray rastaModuleToBytes(struct RastaPacket packet, rasta_hashing_context_t * hashing_context) {
-    unsigned char temp[4];
     struct RastaByteArray result;
     result = allocateBytes(packet, hashing_context);
 
@@ -146,7 +145,7 @@ struct RastaByteArray rastaModuleToBytes(struct RastaPacket packet, rasta_hashin
 
     //pack data
     unsigned int len = getDataLength(packet, hashing_context);
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         result.bytes[28+i] = packet.data.bytes[i];
     }
 
@@ -162,7 +161,7 @@ struct RastaByteArray rastaModuleToBytes(struct RastaPacket packet, rasta_hashin
 
     freeRastaByteArray(&data_to_hash);
 
-    for (int i = 0; i < checksum_len; i++) {
+    for (size_t i = 0; i < checksum_len; i++) {
         result.bytes[28+len+i] = checksum[i];
     }
 
@@ -268,7 +267,7 @@ struct RastaPacket bytesToRastaPacket(struct RastaByteArray data, rasta_hashing_
     unsigned int len = getDataLength(result, hashing_context);
     allocateRastaByteArray(&result.data,len);
 
-    for (int i = 0; i < len; i++) {
+    for (size_t i = 0; i < len; i++) {
         result.data.bytes[i] = data.bytes[28+i];
     }
 
@@ -322,7 +321,7 @@ struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket 
     struct RastaByteArray internal_packet_bytes = rastaModuleToBytes(packet.data, hashing_context);
 
     // pack data into result
-    for (int i = 0; i < internal_packet_len; ++i) {
+    for (size_t i = 0; i < internal_packet_len; ++i) {
         result.bytes[8+i] = internal_packet_bytes.bytes[i];
     }
 
@@ -333,7 +332,7 @@ struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket 
     allocateRastaByteArray(&temp_wo_checksum, len_wo_checksum);
 
     // copy data
-    for (int j = 0; j < len_wo_checksum; ++j) {
+    for (size_t j = 0; j < len_wo_checksum; ++j) {
         temp_wo_checksum.bytes[j] = result.bytes[j];
     }
 
@@ -384,7 +383,7 @@ struct RastaRedundancyPacket bytesToRastaRedundancyPacket(struct RastaByteArray 
     allocateRastaByteArray(&internal_packet_bytes, data_len);
 
     // copy internal data bytes
-    for (int i = 0; i < data_len; ++i) {
+    for (size_t i = 0; i < data_len; ++i) {
         internal_packet_bytes.bytes[i] = data.bytes[8+i];
     }
 
@@ -400,7 +399,7 @@ struct RastaRedundancyPacket bytesToRastaRedundancyPacket(struct RastaByteArray 
     allocateRastaByteArray(&data_wo_checksum, data_wo_checksum_len);
 
     // copy data
-    for (int j = 0; j < data_wo_checksum_len; ++j) {
+    for (size_t j = 0; j < data_wo_checksum_len; ++j) {
         data_wo_checksum.bytes[j] = data.bytes[j];
     }
 

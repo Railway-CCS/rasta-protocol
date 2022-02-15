@@ -46,11 +46,11 @@ int event_system_sleep(uint64_t time_to_wait, fd_event* fd_events, int len) {
 }
 
 /**
- * rescedules the event to the current time + the event interval
+ * reschedules the event to the current time + the event interval
  * resulting in a delay of the event
  * @param event the event to delay
  */
-void rescedule_event(timed_event * event) {
+void reschedule_event(timed_event * event) {
     event->__last_call = get_nanotime();
 }
 
@@ -120,7 +120,7 @@ void start_event_loop(timed_event* timed_events, int timed_events_len, fd_event*
             }
             else if (result >= 0) {
                 // the sleep didn't time out, but a fd event occured
-                // recalculate next timed event in case one got resceduled
+                // recalculate next timed event in case one got rescheduled
                 continue;
             }
         }
@@ -137,7 +137,7 @@ void start_event_loop(timed_event* timed_events, int timed_events_len, fd_event*
  */
 void enable_timed_event(timed_event* event) {
     event->enabled = 1;
-    rescedule_event(event);
+    reschedule_event(event);
 }
 
 /**

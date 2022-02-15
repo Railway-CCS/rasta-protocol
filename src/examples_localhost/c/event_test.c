@@ -33,7 +33,7 @@ char event_read(void * carry_data) {
         buffer[len] = 0;
         printf("detected: %s", buffer);
     }
-    rescedule_event((timed_event*) carry_data);
+    reschedule_event((timed_event*) carry_data);
     return 0;
 }
 
