@@ -1,10 +1,10 @@
-#include<event_system.h>
-#include<stdio.h>
-#include<unistd.h>
+#include <event_system.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #define SECOND_TO_NANO(s) s * (uint64_t) 1000000000
 
-const uint64_t heardbeat_interval = SECOND_TO_NANO(1);
+const uint64_t heartbeat_interval = SECOND_TO_NANO(1);
 const uint64_t disconnect_interval = SECOND_TO_NANO(5);
 uint64_t last_time;
 
@@ -14,9 +14,9 @@ uint64_t test_get_nanotime() {
     return t.tv_sec * 1000000000 + t.tv_nsec;
 }
 
-char send_heardbeat_event(void * carry_data) {
+char send_heartbeat_event(void * carry_data) {
     uint64_t n_time = test_get_nanotime();
-    printf("time since last call: %8lu us - expected:%8lu us\n", (n_time - last_time) / 1000, heardbeat_interval / 1000);
+    printf("time since last call: %8lu us - expected:%8lu us\n", (n_time - last_time) / 1000, heartbeat_interval / 1000);
     last_time = n_time;
     return 0;
 }
@@ -40,8 +40,8 @@ char event_read(void * carry_data) {
 int main() {
     last_time = test_get_nanotime();
     timed_event t_events[2];
-    t_events[0].callback = send_heardbeat_event;
-    t_events[0].interval = heardbeat_interval;
+    t_events[0].callback = send_heartbeat_event;
+    t_events[0].interval = heartbeat_interval;
     t_events[0].carry_data = NULL;
 
     t_events[1].callback = disconnect_event;

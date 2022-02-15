@@ -1,8 +1,8 @@
 #ifndef EVENT_LOOP_H
 #define EVENT_LOOP_H
-#include<inttypes.h>
-#include<time.h>
-#include<unistd.h>
+#include <inttypes.h>
+#include <time.h>
+#include <unistd.h>
 
 #ifdef __cplusplus
 extern "C" {  // only need to export C interface if
@@ -41,7 +41,7 @@ typedef struct fd_event {
  * @param fd_events an array with the events, that get called whenever the given fd gets readable
  * @param fd_events_len the length of the fd event array
  */
-void start_event_loop(timed_event* timed_events[], int timed_events_len, fd_event* fd_events[], int fd_events_len);
+void start_event_loop(timed_event* timed_events, int timed_events_len, fd_event* fd_events, int fd_events_len);
 
 /**
  * rescedules the event to the current time + the event interval
