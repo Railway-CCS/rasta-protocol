@@ -80,7 +80,7 @@ uint32_t get_initial_seq_num(struct RastaConfig * config){
 
     if (init_seq.type == DICTIONARY_NUMBER){
         // random number when < 0 or the specified value else
-        return (init_seq.value.number < 0) ? long_random() : init_seq.value.number;
+        return (init_seq.value.number < 0) ? long_random() : init_seq.value.unumber;
     }
 
     // return random value if there is not a number in config
@@ -164,14 +164,14 @@ void send_DisconnectionRequest(redundancy_mux *mux, struct rasta_connection * co
  * @param host the host where the HB will be sent to
  * @param port the port where the HB will be sent to
  */
-void send_Heartbeat(redundancy_mux *mux, struct rasta_connection * connection, char rescedule_manually){
+void send_Heartbeat(redundancy_mux *mux, struct rasta_connection * connection, char reschedule_manually){
     struct RastaPacket hb = createHeartbeat(connection->remote_id, connection->my_id, connection->sn_t,
                                             connection->cs_t, cur_timestamp(), connection->ts_r, &mux->sr_hashing_context);
 
     redundancy_mux_send(mux, hb);
 
     connection->sn_t = connection->sn_t +1;
-    if (rescedule_manually) {
+    if (reschedule_manually) {
         reschedule_event(connection->send_heartbeat_event);
     }
 }
@@ -198,13 +198,14 @@ void send_RetransmissionResponse(redundancy_mux *mux, struct rasta_connection * 
 
 
 
-unsigned int sr_retr_data_available(struct logger_t *logger,struct rasta_connection * connection){
+unsigned int sr_retr_data_available(struct logger_t *logger, struct rasta_connection * connection){
+    (void)logger;
     return fifo_get_size(connection->fifo_retr);
 }
 
-unsigned int sr_rasta_send_data_available(struct logger_t *logger,struct rasta_connection * connection){
+unsigned int sr_rasta_send_data_available(struct logger_t *logger, struct rasta_connection * connection){
+    (void)logger;
     return fifo_get_size(connection->fifo_send);
-
 }
 
 void updateTI(long confirmed_timestamp, struct rasta_connection * con, struct RastaConfigInfoSending cfg) {
@@ -505,6 +506,7 @@ void sr_diagnostic_interval_init(struct rasta_connection * connection, struct Ra
 }
 
 void sr_init_connection(struct rasta_connection* connection, unsigned long id, struct RastaConfigInfoGeneral info, struct RastaConfigInfoSending cfg, struct logger_t *logger, rasta_role role) {
+    (void)logger;
     sr_reset_connection(connection,id,info);
     connection->role = role;
 
@@ -639,7 +641,7 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
         new_con.current_state = RASTA_CONNECTION_DOWN;
 
         // check received packet (5.5.2)
-        if (!sr_check_packet(&new_con,h->logger,h->config,receivedPacket, "RaSTA HANDLE: ConnectionRequest")){
+        if (!sr_check_packet(&new_con,h->logger,h->config,receivedPacket, "RaSTA HANDLE: ConnectionRequest")) {
             logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Packet is not valid");
             sr_close_connection(&new_con,h->handle,h->mux,h->info,RASTA_DISC_REASON_PROTOCOLERROR,0);
             return connection;
@@ -715,8 +717,8 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
     else {
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: ConnectionRequest", "Connection is in invalid state (%d) send DisconnectionRequest",connection->current_state);
         sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE,0);
-
     }
+    return connection;
 }
 
 struct rasta_connection * handle_conresp(struct rasta_receive_handle *h, int con_id, struct RastaPacket receivedPacket) {
@@ -1258,13 +1260,14 @@ char on_readable_event(void * handle) {
     }
 
     freeRastaByteArray(&receivedPacket.data);
+    return 0;
 }
 
 char event_connection_expired(void * carry_data) {
     struct timed_event_data* data = carry_data;
     struct rasta_heartbeat_handle* h = (struct rasta_heartbeat_handle*) data->handle;
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "T_i timer expired - send DisconnectionRequest");
-    
+
     //because its multithreaded, count can get wrong
     struct rasta_connection * connection = rastalist_getConnection(h->connections, data->connection_index);
     //so check if connection is valid
@@ -1358,7 +1361,7 @@ char data_send_event(void * carry_data) {
                             msg_queue);
 
 
-                for (int i = 0; i < msg_queue; i++) {
+                for (size_t i = 0; i < msg_queue; i++) {
 
                     struct RastaByteArray * elem;
                     elem = fifo_pop(connection->fifo_send);
@@ -1406,6 +1409,7 @@ char data_send_event(void * carry_data) {
 
         usleep(50);
     }
+    return 0;
 }
 
 void sr_init_handle_manually(struct rasta_handle *handle, struct RastaConfigInfo configuration, struct DictionaryArray accepted_version, struct logger_t logger) {
@@ -1505,7 +1509,7 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
 
     // fire connection state changed event
     fire_on_connection_state_change(sr_create_notification_result(handle,con));
-    
+
     register_connection(con_id, con);
 }
 
@@ -1672,8 +1676,6 @@ void init_connection_events(timed_event * t_events, int connection_index, struct
 
 void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "Thread started");
-
-    unsigned int con_count = rastalist_count(&h->connections);
 
     for (int i = 0; i < MAX_CONNECTIONS_SUPPORTED; i++) {
         init_connection_events(t_events + i * EVENTS_PER_CONNECTION, i, h);

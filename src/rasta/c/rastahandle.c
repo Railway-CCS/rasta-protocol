@@ -30,7 +30,7 @@ struct rasta_notification_result sr_create_notification_result(struct rasta_hand
  * @param connection the connection that will be used
  * @return unused
  */
-void* on_constatechange_call(struct rasta_notification_result * result){
+void on_constatechange_call(struct rasta_notification_result * result){
     (*result->handle->notifications.on_connection_state_change)(result);
 
     // notification handler completed, decrease amount of running threads
@@ -55,7 +55,7 @@ void fire_on_connection_state_change(struct rasta_notification_result result){
 }
 
 
-void* on_receive_call(struct rasta_notification_result * result){
+void on_receive_call(struct rasta_notification_result * result){
     (*result->handle->notifications.on_receive)(result);
 
     // notification handler completed, decrease amount of running threads
@@ -83,7 +83,7 @@ void fire_on_receive(struct rasta_notification_result result){
     on_receive_call(&result);
 }
 
-void* on_discrequest_change_call(struct rasta_disconnect_notification_result * container){
+void on_discrequest_change_call(struct rasta_disconnect_notification_result * container){
     struct rasta_disconnect_notification_result * result = (struct rasta_disconnect_notification_result * )container;
 
     (*result->result.handle->notifications.on_disconnection_request_received)(&result->result,result->reason,result->detail);
@@ -130,7 +130,7 @@ void fire_on_discrequest_state_change(struct rasta_notification_result result, s
  * @param connection the connection that will be used
  * @return unused
  */
-void* on_diagnostic_call(void * container){
+void on_diagnostic_call(void * container){
     struct rasta_notification_result * result = (struct rasta_notification_result * )container;
 
     (*result->handle->notifications.on_diagnostic_notification)(result);
@@ -168,7 +168,7 @@ void fire_on_diagnostic_notification(struct rasta_notification_result result){
     on_diagnostic_call(&result);
 }
 
-void * on_handshake_complete_call(struct rasta_notification_result * result){
+void on_handshake_complete_call(struct rasta_notification_result * result) {
     (*result->handle->notifications.on_handshake_complete)(result);
 
     // notification handler completed, decrease amount of running threads
@@ -188,7 +188,7 @@ void fire_on_handshake_complete(struct rasta_notification_result result){
     on_handshake_complete_call(&result);
 }
 
-void * on_heartbeat_timeout_call(struct rasta_notification_result * result){
+void on_heartbeat_timeout_call(struct rasta_notification_result * result){
     (*result->handle->notifications.on_heartbeat_timeout)(result);
 
     // notification handler completed, decrease amount of running threads

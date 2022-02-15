@@ -114,7 +114,7 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
     channel->connected_channels[channel_id].diagnostics_data.received_packets += 1;
 
     // only accept pdu with seq. nr = 0 as first message
-    if (channel->seq_rx == 0 && channel->seq_tx == 0 && packet.sequence_number != 0){
+    if (channel->seq_rx == 0 && channel->seq_tx == 0 && packet.sequence_number != 0) {
         logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: first seq_pdu != 0", channel_id);
 
         return;

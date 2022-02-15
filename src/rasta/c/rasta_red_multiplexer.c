@@ -279,14 +279,14 @@ char channel_receive_event(void * carry_data) {
     struct rasta_handle * h = data->h;
     unsigned int mux_channel_count = h->mux.channel_count;
 
-    for (int i = 0; i < mux_channel_count; ++i) {
+    for (size_t i = 0; i < mux_channel_count; ++i) {
         rasta_redundancy_channel current = h->mux.connected_channels[i];
         int n_diagnose = h->mux.config.redundancy.n_diagnose;
 
         unsigned long channel_diag_start_time = current.connected_channels[data->channel_index].diagnostics_data.start_time;
 
 
-        if (current_ts() - channel_diag_start_time >= n_diagnose){
+        if (current_ts() - channel_diag_start_time >= (unsigned long)n_diagnose){
             // increase n_missed by amount of messages that are not received
 
             // amount of missed packets
@@ -334,7 +334,7 @@ char channel_timeout_event(void * carry_data) {
 
     unsigned int mux_channel_count = mx->channel_count;
 
-    for (int i = 0; i < mux_channel_count; ++i) {
+    for (size_t i = 0; i < mux_channel_count; ++i) {
         data->event->interval = 100000;
         rasta_redundancy_channel current_channel = mx->connected_channels[i];
 
@@ -359,7 +359,6 @@ char channel_timeout_event(void * carry_data) {
             data->event->interval = 1000 * (channel_t_seq - (current_time - channel_oldest_ts));
         }
     }
-    int open = mx->is_open;
     return 0;
 }
 
@@ -370,6 +369,7 @@ char channel_timeout_event(void * carry_data) {
  * @param mux the redundancy multiplexer that will contain the channels
  */
 void init_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux) {
+    int open = mux->is_open;
     t_data->mux = mux;
     t_data->event = event;
     event->meta_information.callback = channel_timeout_event;
@@ -665,7 +665,7 @@ int redundancy_try_mux_retrieve(redundancy_mux * mux, unsigned long id, struct R
     if (fifo_get_size(target->fifo_recv) == 0) {
         return 0;
     }
-    
+
 
     logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux retrieve", "Found element in queue");
 
@@ -778,7 +778,7 @@ unsigned int get_queue_msg_count(redundancy_mux * mux, int redundancy_channel_in
 }
 
 int redundancy_mux_try_retrieve_all(redundancy_mux * mux, struct RastaPacket* out) {
-    for (int i = 0; i < mux->channel_count; i++) {
+    for (size_t i = 0; i < mux->channel_count; i++) {
         if (get_queue_msg_count(mux, i) > 0){
             logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux retrieve all", "channel with index %d has messages", i);
             redundancy_try_mux_retrieve(mux, mux->connected_channels[i].associated_id, out);

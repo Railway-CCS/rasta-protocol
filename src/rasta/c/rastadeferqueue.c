@@ -77,7 +77,7 @@ void deferqueue_add(struct defer_queue * queue, struct RastaRedundancyPacket pac
 
 void deferqueue_remove(struct defer_queue * queue, unsigned long seq_nr){
     int index = find_index(queue, seq_nr);
-    if(index == -1){
+    if (index < 0){
         // element not in queue
         return;
     }

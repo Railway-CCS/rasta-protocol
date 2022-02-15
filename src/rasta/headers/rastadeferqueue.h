@@ -40,7 +40,7 @@ struct defer_queue{
     /**
      * maximum number of elements in the queue
      */
-    unsigned int max_count
+    unsigned int max_count;
 };
 
 /**
