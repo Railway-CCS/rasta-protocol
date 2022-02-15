@@ -1,7 +1,7 @@
-#include"event_system.h"
-#include"rasta_new.h"
-#include<time.h>
-#include<sys/select.h>
+#include "event_system.h"
+#include "rasta_new.h"
+#include <time.h>
+#include <sys/select.h>
 
 uint64_t get_nanotime() {
     struct timespec t;
