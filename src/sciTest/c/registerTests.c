@@ -50,3 +50,17 @@ void gradle_cunit_register() {
     CU_add_test(sci_suite, "testParseChangeBrightness", testParseChangeBrightness);
     CU_add_test(sci_suite, "testParseBrightnessStatus", testParseBrightnessStatus);
 }
+
+#ifdef WITH_CMAKE
+int main () {
+    if (CUE_SUCCESS != CU_initialize_registry())
+        return CU_get_error();
+
+    gradle_cunit_register();
+
+    CU_basic_run_tests();
+    int ret = CU_get_number_of_failures();
+    CU_cleanup_registry();
+    return ret;
+}
+#endif

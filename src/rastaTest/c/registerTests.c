@@ -84,3 +84,17 @@ void gradle_cunit_register() {
     // Tests for BLAKE2 hashes
     CU_add_test(pSuiteMath, "testBlake2Hash", testBlake2Hash);
 }
+
+#ifdef WITH_CMAKE
+int main () {
+    if (CUE_SUCCESS != CU_initialize_registry())
+        return CU_get_error();
+
+    gradle_cunit_register();
+
+    CU_basic_run_tests();
+    int ret = CU_get_number_of_failures();
+    CU_cleanup_registry();
+    return ret;
+}
+#endif
