@@ -22,9 +22,8 @@ include_directories(
 set(EXECUTABLE_OUTPUT_PATH bin/exe/examples)
 set(LIBRARY_OUTPUT_PATH bin/lib)
 
-# Shared object for RaSTA and SCI protocols
-add_library(rasta SHARED
-        # RaSTA headers
+# RaSTA headers
+set(RASTA_HDRS
         src/rasta/headers/config.h
         src/rasta/headers/dictionary.h
         src/rasta/headers/fifo.h
@@ -45,7 +44,10 @@ add_library(rasta SHARED
         src/rasta/headers/rastablake2.h
         src/rasta/headers/rastasiphash24.h
         src/rasta/headers/rastahashing.h
-        # SCI headers
+    )
+
+# SCI headers
+set(SCI_HDRS
         src/sci/headers/hashmap.h
         src/sci/headers/sci.h
         src/sci/headers/sci_telegram_factory.h
@@ -53,6 +55,10 @@ add_library(rasta SHARED
         src/sci/headers/scils_telegram_factory.h
         src/sci/headers/scip.h
         src/sci/headers/scip_telegram_factory.h
+    )
+
+# Shared object for RaSTA and SCI protocols
+add_library(rasta SHARED
         # RaSTA sources
         src/rasta/c/config.c
         src/rasta/c/dictionary.c
@@ -85,6 +91,12 @@ add_library(rasta SHARED
         )
 # Link system libraries for librasta
 target_link_libraries(rasta rt pthread)
+
+set_property(
+    TARGET rasta
+    PROPERTY PUBLIC_HEADER
+        ${RASTA_HDRS}
+        ${SCI_HDRS})
 
 # if USE_OPENSSL parameter is passed to cmake or if architecture is ARM -> use openssl md4 implementation
 if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm" OR ${USE_OPENSSL})
