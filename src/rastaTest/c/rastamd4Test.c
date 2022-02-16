@@ -133,7 +133,7 @@ void testRastaMD4Sample() {
 
     //std context
 
-    MD4_CTX context = md4InitContext(0x67452301,0xefcdab89,0x98badcfe,0x10325476);
+    MD4_CONTEXT context = md4InitContext(0x67452301,0xefcdab89,0x98badcfe,0x10325476);
 
     //holder for md4
     unsigned char calc_md4[16];
