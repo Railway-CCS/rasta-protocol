@@ -11,6 +11,11 @@ option(BUILD_DOCUMENTATION "Generate documentation" OFF)
 option(BUILD_LOCAL_EXAMPLES "Build the RaSTA/SCI examples the run on localhost" ON)
 option(BUILD_REMOTE_EXAMPLES "Build the RaSTA/SCI examples that communicate in a network" ON)
 option(EXAMPLE_IP_OVERRIDE "Use IPs from environment variables in RaSTA/SCI examples" OFF)
+option(ENABLE_STATIC_ANALYSIS "Run cppcheck along with the compiler" OFF)
+
+if(ENABLE_STATIC_ANALYSIS)
+    set(CMAKE_C_CPPCHECK "cppcheck" "--enable=performance,information")
+endif(ENABLE_STATIC_ANALYSIS)
 
 include(CTest)
 include(GNUInstallDirs)
