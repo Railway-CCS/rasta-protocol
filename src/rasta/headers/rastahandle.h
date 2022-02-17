@@ -21,6 +21,7 @@ extern "C" {  // only need to export C interface if
 #include "config.h"
 #include "rasta_red_multiplexer.h"
 
+struct rasta_notification_result;
 
 /**
  * pointer to a function that will be called when application messages are ready for processing

@@ -60,7 +60,6 @@ typedef void(*scip_on_status_begin_received_ptr)(scip_t *, char*);
 typedef void(*scip_on_status_finish_received_ptr)(scip_t *, char*);
 
 /**
- * /**
  * Pointer to a function that will be called when a change location telegram is received.
  * 1st parameter is the scip instance.
  * 2nd parameter is the sender name.
