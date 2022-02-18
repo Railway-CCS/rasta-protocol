@@ -10,7 +10,7 @@ extern "C" {  // only need to export C interface if
 #endif
 
 // event callback pointer, return 0 to keep the loop running, everything else stops the loop
-typedef char (*event_ptr)();
+typedef int (*event_ptr)(void* h);
 
 /**
  * contains a function pointer to a callback function and interval in microseconds

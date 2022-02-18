@@ -161,7 +161,7 @@ void redundancy_mux_open(redundancy_mux * mux);
  */
 void redundancy_mux_close(redundancy_mux * mux);
 
-char channel_receive_event(void * carry_data);
+int channel_receive_event(void * carry_data);
 
 /**
  * getter for a redundancy channel

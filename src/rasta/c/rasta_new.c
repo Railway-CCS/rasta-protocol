@@ -18,7 +18,7 @@
  * this will generate a 4 byte timestamp of the current system time
  * @return current system time in s since 1970
  */
-uint32_t cur_timestamp(){
+uint32_t cur_timestamp() {
     long ms;
     time_t s;
     struct timespec spec;
@@ -1152,7 +1152,7 @@ void handle_retrdata(struct rasta_receive_handle *h, struct rasta_connection *co
  * threads
  */
 
-char on_readable_event(void * handle) {
+int on_readable_event(void * handle) {
     struct rasta_receive_handle *h = (struct rasta_receive_handle*) handle;
 
     // wait for incoming packets
@@ -1266,7 +1266,7 @@ char on_readable_event(void * handle) {
     return 0;
 }
 
-char event_connection_expired(void * carry_data) {
+int event_connection_expired(void * carry_data) {
     struct timed_event_data * data = carry_data;
     struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) data->handle;
     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "T_i timer expired - send DisconnectionRequest");
@@ -1287,7 +1287,7 @@ char event_connection_expired(void * carry_data) {
         || connection->current_state == RASTA_CONNECTION_RETRRUN) {
 
         // fire heartbeat timeout event
-        fire_on_hearbeat_timeout(sr_create_notification_result(h->handle, connection));
+        fire_on_heartbeat_timeout(sr_create_notification_result(h->handle, connection));
 
         // T_i expired -> close connection
         sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_TIMEOUT, 0);
@@ -1324,7 +1324,7 @@ char heartbeat_send_event(void * carry_data) {
 }
 
 // TODO: split up this mess of a function
-char data_send_event(void * carry_data) {
+int data_send_event(void * carry_data) {
     struct rasta_sending_handle * h = carry_data;
     unsigned int con_count = rastalist_count(h->connections);
 
@@ -1434,7 +1434,7 @@ void sr_init_handle_manually(struct rasta_handle *handle, struct RastaConfigInfo
 
 void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
 
-    rasta_handle_init(handle,config_file_path);
+    rasta_handle_init(handle, config_file_path);
 
     // init the redundancy layer
     handle->mux = redundancy_mux_init_(handle->redlogger,handle->config.values);
@@ -1700,5 +1700,3 @@ void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
 
     start_event_loop(t_events, CONNECTION_EVENTS + OTHER_EVENTS, fd_event_ptr_arr, len + channel_event_data_len);
 }
-
-

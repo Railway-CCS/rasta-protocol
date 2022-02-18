@@ -1,7 +1,7 @@
-#include<stdio.h>
-#include<jni.h>
+#include <stdio.h>
+#include <jni.h>
 #include "RastaNative.h"
-#include<rasta_new.h>
+#include <rasta_new.h>
 #include <rmemory.h>
 #include <rastaredundancy_new.h>
 
