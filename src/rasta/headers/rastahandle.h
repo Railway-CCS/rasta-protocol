@@ -242,11 +242,6 @@ struct rasta_handle {
     struct rasta_notification_ptr notifications;
 
     /**
-     *
-     */
-    int running_notifications;
-
-    /**
     * the logger which is used to log protocol activities
     */
     struct logger_t logger;

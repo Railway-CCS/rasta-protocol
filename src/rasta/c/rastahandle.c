@@ -32,9 +32,6 @@ struct rasta_notification_result sr_create_notification_result(struct rasta_hand
  */
 void on_constatechange_call(struct rasta_notification_result * result){
     (*result->handle->notifications.on_connection_state_change)(result);
-
-    // notification handler completed, decrease amount of running threads
-    result->handle->running_notifications = result->handle->running_notifications -1;
 }
 
 /**
@@ -48,18 +45,12 @@ void fire_on_connection_state_change(struct rasta_notification_result result){
         return;
     }
 
-    // a thread will be started, increase amount of running notification threads
-    result.handle->running_notifications = result.handle->running_notifications + 1;
-
     on_constatechange_call(&result);
 }
 
 
 void on_receive_call(struct rasta_notification_result * result){
     (*result->handle->notifications.on_receive)(result);
-
-    // notification handler completed, decrease amount of running threads
-    result->handle->running_notifications = result->handle->running_notifications -1;
 }
 
 /**
@@ -73,9 +64,6 @@ void fire_on_receive(struct rasta_notification_result result){
         return;
     }
 
-    // a thread will be started, increase amount of running notification threads
-    result.handle->running_notifications = result.handle->running_notifications + 1;
-
     //create container
     struct rasta_notification_result* container = rmalloc(sizeof(struct rasta_notification_result));
     *container = result;
@@ -87,9 +75,6 @@ void on_discrequest_change_call(struct rasta_disconnect_notification_result * co
     struct rasta_disconnect_notification_result * result = (struct rasta_disconnect_notification_result * )container;
 
     (*result->result.handle->notifications.on_disconnection_request_received)(&result->result,result->reason,result->detail);
-
-    // notification handler completed, decrease amount of running threads
-    result->result.handle->running_notifications = result->result.handle->running_notifications -1;
 
     //free container
     rfree(container);
@@ -108,9 +93,6 @@ void fire_on_discrequest_state_change(struct rasta_notification_result result, s
         // notification not set, do nothing
         return;
     }
-
-    // a thread will be started, increase amount of running notification threads
-    result.handle->running_notifications = result.handle->running_notifications + 1;
 
     //create container
 
@@ -135,9 +117,6 @@ void on_diagnostic_call(void * container){
 
     (*result->handle->notifications.on_diagnostic_notification)(result);
 
-    // notification handler completed, decrease amount of running threads
-    result->handle->running_notifications = result->handle->running_notifications -1;
-
     //free container
     rfree(container);
 
@@ -161,18 +140,12 @@ void fire_on_diagnostic_notification(struct rasta_notification_result result){
         return;
     }
 
-    // a thread will be started, increase amount of running notification threads
-    result.handle->running_notifications = result.handle->running_notifications + 1;
-
     //create container
     on_diagnostic_call(&result);
 }
 
 void on_handshake_complete_call(struct rasta_notification_result * result) {
     (*result->handle->notifications.on_handshake_complete)(result);
-
-    // notification handler completed, decrease amount of running threads
-    result->handle->running_notifications = result->handle->running_notifications -1;
 }
 
 void fire_on_handshake_complete(struct rasta_notification_result result){
@@ -181,9 +154,6 @@ void fire_on_handshake_complete(struct rasta_notification_result result){
         // notification not set, do nothing
         return;
     }
-
-    // a thread will be started, increase amount of running notification threads
-    result.handle->running_notifications = result.handle->running_notifications + 1;
 
     on_handshake_complete_call(&result);
 }
@@ -221,8 +191,6 @@ void rasta_handle_manually_init(struct rasta_handle *h, struct RastaConfigInfo c
     h->notifications.on_diagnostic_notification = NULL;
     h->notifications.on_disconnection_request_received = NULL;
     h->notifications.on_redundancy_diagnostic_notification = NULL;
-
-    h->running_notifications = 0;
 
     // init the list
     h->connections = rastalist_create(2);
@@ -329,8 +297,6 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
     h->notifications.on_diagnostic_notification = NULL;
     h->notifications.on_disconnection_request_received = NULL;
     h->notifications.on_redundancy_diagnostic_notification = NULL;
-
-    h->running_notifications = 0;
 
 
     // init the list
