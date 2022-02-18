@@ -11,7 +11,7 @@
  * @param string
  */
 void uppercase(char * string) {
-    for (int i = 0; i < strlen(string); i++) {
+    for (unsigned int i = 0; i < strlen(string); i++) {
         if (isalpha(string[i])) {
             string[i] = (char)toupper(string[i]);
         }
@@ -81,7 +81,7 @@ struct Dictionary dictionary_create(unsigned int initial_size) {
 }
 
 void dictionary_free(struct Dictionary* dict) {
-    for (int i = 0; i < dict->size; i++) {
+    for (unsigned int i = 0; i < dict->size; i++) {
         if (dict->data[i].type == DICTIONARY_ARRAY) {
             free_DictionaryArray(&dict->data[i].value.array);
         }
@@ -99,7 +99,7 @@ int dictionary_isin(struct Dictionary* dict, const char key[265]) {
     strcpy(nkey,key);
     uppercase(nkey);
 
-    for (int i = 0; i < dict->size; i++) {
+    for (unsigned int i = 0; i < dict->size; i++) {
         if (strcmp(nkey, dict->data[i].key) == 0) {
             //key matched
             result = 1;
@@ -143,7 +143,7 @@ struct DictionaryEntry dictionary_get(struct Dictionary* dict, const char key[26
     char nkey[265];
     strcpy(nkey,key);
     uppercase(nkey);
-    for (int i = 0; i < dict->size; i++) {
+    for (unsigned int i = 0; i < dict->size; i++) {
         if (strcmp(nkey, dict->data[i].key) == 0) {
             //found
             return dict->data[i];

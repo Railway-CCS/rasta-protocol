@@ -5,14 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <rasta_new.h>
+#include <unistd.h>
 #include "rasta_new.h"
 #include "rmemory.h"
-#include <unistd.h>
 
-#define CONFIG_PATH_S "../../../rasta_server_local.cfg"
-#define CONFIG_PATH_C1 "../../../rasta_client1_local.cfg"
-#define CONFIG_PATH_C2 "../../../rasta_client2_local.cfg"
+#define CONFIG_PATH_S "../../../rasta_server.cfg"
+#define CONFIG_PATH_C1 "../../../rasta_client1.cfg"
+#define CONFIG_PATH_C2 "../../../rasta_client2.cfg"
 
 #define ID_R 0x61
 #define ID_S1 0x62
@@ -172,10 +171,17 @@ int main(int argc, char *argv[]){
 
     struct RastaIPData toServer[2];
 
-    strcpy(toServer[0].ip, "127.0.0.1");
-    strcpy(toServer[1].ip, "127.0.0.1");
+#ifdef EXAMPLE_IP_OVERRIDE
+    strcpy(toServer[0].ip, getenv("SERVER_CH1"));
+    strcpy(toServer[1].ip, getenv("SERVER_CH2"));
+#else
+    strcpy(toServer[0].ip, "10.0.0.100");
+    strcpy(toServer[1].ip, "10.0.0.101");
+#endif
     toServer[0].port = 8888;
     toServer[1].port = 8889;
+
+    printf("Server at %s:%d and %s:%d\n", toServer[0].ip, toServer[0].port, toServer[1].ip, toServer[1].port);
 
 
     if (strcmp(argv[1], "r") == 0) {

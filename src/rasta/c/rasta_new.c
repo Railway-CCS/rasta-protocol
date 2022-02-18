@@ -80,7 +80,7 @@ uint32_t get_initial_seq_num(struct RastaConfig * config){
 
     if (init_seq.type == DICTIONARY_NUMBER){
         // random number when < 0 or the specified value else
-        return (init_seq.value.number < 0) ? long_random() : init_seq.value.number;
+        return (init_seq.value.number < 0) ? long_random() : init_seq.value.unumber;
     }
 
     // return random value if there is not a number in config
@@ -124,7 +124,7 @@ int version_accepted(struct rasta_receive_handle *h, const char version[4]){
             }
         }
     }*/
-    for (int i = 0; i < h->accepted_version.count; ++i) {
+    for (unsigned int i = 0; i < h->accepted_version.count; ++i) {
         if (compare_version(h->accepted_version.data[i].c, version) == 0){
             // match, version is in accepted version list
             return 1;
@@ -197,12 +197,13 @@ void send_RetransmissionResponse(redundancy_mux *mux, struct rasta_connection * 
 
 
 unsigned int sr_retr_data_available(struct logger_t *logger,struct rasta_connection * connection){
+    (void)logger;
     return fifo_get_size(connection->fifo_retr);
 }
 
 unsigned int sr_rasta_send_data_available(struct logger_t *logger,struct rasta_connection * connection){
+    (void)logger;
     return fifo_get_size(connection->fifo_send);
-
 }
 
 void updateTI(long confirmed_timestamp, struct rasta_connection * con, struct RastaConfigInfoSending cfg) {
@@ -274,7 +275,7 @@ void sr_add_app_messages_to_buffer(struct rasta_receive_handle *h, struct rasta_
     logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA add to buffer", "received %d application messages", received_data.count);
 
 
-    for (int i = 0; i < received_data.count; ++i) {
+    for (unsigned int i = 0; i < received_data.count; ++i) {
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA add to buffer", "received msg: %s", received_data.data_array[i]);
 
         rastaApplicationMessage * elem = rmalloc(sizeof(rastaApplicationMessage));
@@ -339,13 +340,10 @@ int sr_cts_in_seq(struct rasta_connection* con, struct RastaConfigInfoSending cf
 
     if (packet.type == RASTA_TYPE_HB || packet.type == RASTA_TYPE_DATA || packet.type == RASTA_TYPE_RETRDATA){
         // cts_in_seq := 0 <= CTS_PDU – CTS_R < t_i
-        int time_diff = (int)(packet.confirmed_timestamp - con->cts_r);
-        if (time_diff < 0){
-            time_diff = 0;
+        if (packet.confirmed_timestamp < con->cts_r){
+            return 0;
         }
-        int cts_in_seq = (time_diff >= 0) && (time_diff < cfg.t_max);
-
-        return cts_in_seq;
+        return (packet.confirmed_timestamp - con->cts_r) < cfg.t_max;
     } else {
         // for any other type return always true
         return 1;
@@ -384,7 +382,7 @@ int sr_sn_range_valid(struct rasta_connection * con, struct RastaConfigInfoSendi
 
     // else
     // seq. nr. in range when 0 <= SN_PDU - SN_R <= N_SENDMAX * 10
-    return (0 <= (packet.sequence_number - con->sn_r) &&
+    return ((packet.sequence_number >= con->sn_r) &&
             (packet.sequence_number - con->sn_r) <= (cfg.send_max * 10));
 }
 
@@ -403,7 +401,7 @@ int sr_cs_valid(struct rasta_connection * con, struct RastaPacket packet){
         return (packet.confirmed_sequence_number == (con->sn_t - 1));
     } else{
         // 0 <= CS_PDU - CS_R < SN_T - CS_R
-        return (0 <= (packet.confirmed_sequence_number - con->cs_r) &&
+        return ((packet.confirmed_sequence_number >= con->cs_r) &&
                 (packet.confirmed_sequence_number - con->cs_r) < (con->sn_t - con->cs_r));
     }
 }
@@ -509,6 +507,7 @@ void sr_diagnostic_interval_init(struct rasta_connection * connection, struct Ra
 }
 
 void sr_init_connection(struct rasta_connection* connection, unsigned long id, struct RastaConfigInfoGeneral info, struct RastaConfigInfoSending cfg, struct logger_t *logger, rasta_role role) {
+    (void)logger;
     pthread_mutex_init(&connection->lock, NULL);
 
     sr_reset_connection(connection,id,info);
@@ -1403,7 +1402,7 @@ void * send_thread(void * handle){
                                msg_queue);
 
 
-                    for (int i = 0; i < msg_queue; i++) {
+                    for (unsigned int i = 0; i < msg_queue; i++) {
 
                         struct RastaByteArray * elem;
                         elem = fifo_pop(connection->fifo_send);
@@ -1585,7 +1584,7 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
 
 void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPData *channels) {
 
-    for (int i = 0; i < handle->connections.size; i++) {
+    for (unsigned int i = 0; i < handle->connections.size; i++) {
         //TODO: Error handling
         if (handle->connections.data[i].remote_id == id) return;
     }
@@ -1653,7 +1652,7 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
             return;
         }
 
-        for (int i = 0; i < app_messages.count; ++i) {
+        for (unsigned int i = 0; i < app_messages.count; ++i) {
             struct RastaByteArray msg;
             msg = app_messages.data_array[i];
 
@@ -1740,7 +1739,7 @@ void sr_cleanup(struct rasta_handle *h) {
 
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Cleanup", "Threads joined");
 
-    for (int i = 0; i < h->connections.size; i++) {
+    for (unsigned int i = 0; i < h->connections.size; i++) {
         struct rasta_connection connection = h->connections.data[i];
         // free memory allocated for diagnostic intervals
         rfree(connection.diagnostic_intervals);

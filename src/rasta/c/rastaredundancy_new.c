@@ -261,7 +261,7 @@ void rasta_red_cleanup(rasta_redundancy_channel * channel){
 
     logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red cleanup", "freeing connected channels");
     // free the channels
-    for (int i = 0; i < channel->connected_channel_count; ++i) {
+    for (unsigned int i = 0; i < channel->connected_channel_count; ++i) {
         rfree(channel->connected_channels[i].ip_address);
     }
     rfree(channel->connected_channels);

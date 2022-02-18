@@ -2,12 +2,14 @@
 // Created by Johannes on 29.11.2017.
 //
 
-#include <rastamd4.h>
 #include <CUnit/Basic.h>
 #include <time.h>
-#include "../headers/rastamd4Test.h"
 #include <stdio.h>
-#include "rmemory.h"
+#include <stdlib.h>
+
+#include <rastamd4.h>
+#include <rmemory.h>
+#include "../headers/rastamd4Test.h"
 
 void testMD4function(){
 
@@ -50,25 +52,25 @@ void testMD4function(){
     //Vergleichen ob überhaupt richtiger Hashwert erzeugt wird
     unsigned char MD4result5[16];
 
-    unsigned char* hashOfEmptyString[16];
-
     // MD4("") = 31d6cfe0d16ae931b73c59d7e0c089c0 source: Test Suite https://tools.ietf.org/html/rfc1320
-    hashOfEmptyString[0] = 0x31;
-    hashOfEmptyString[1] = 0xd6;
-    hashOfEmptyString[2] = 0xcf;
-    hashOfEmptyString[3] = 0xe0;
-    hashOfEmptyString[4] = 0xd1;
-    hashOfEmptyString[5] = 0x6a;
-    hashOfEmptyString[6] = 0xe9;
-    hashOfEmptyString[7] = 0x31;
-    hashOfEmptyString[8] = 0xb7;
-    hashOfEmptyString[9] = 0x3c;
-    hashOfEmptyString[10] = 0x59;
-    hashOfEmptyString[11] = 0xd7;
-    hashOfEmptyString[12] = 0xe0;
-    hashOfEmptyString[13] = 0xc0;
-    hashOfEmptyString[14] = 0x89;
-    hashOfEmptyString[15] = 0xc0;
+    unsigned char hashOfEmptyString[16] = {
+        0x31,
+        0xd6,
+        0xcf,
+        0xe0,
+        0xd1,
+        0x6a,
+        0xe9,
+        0x31,
+        0xb7,
+        0x3c,
+        0x59,
+        0xd7,
+        0xe0,
+        0xc0,
+        0x89,
+        0xc0
+    };
 
     generateMD4("", 0, 2, MD4result5);
 

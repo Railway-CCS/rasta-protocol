@@ -2,7 +2,6 @@
 #define LST_SIMULATOR_REGISTERTESTS_H
 
 #include <CUnit/Basic.h>
-#include "gradle_cunit_register.h"
 
 // include tests
 #include "sciTests.h"

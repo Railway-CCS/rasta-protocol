@@ -356,7 +356,7 @@ void * channel_receive_handler(void * arg_wrapper){
             pthread_mutex_unlock(&current.channel_lock);
 
 
-            if (current_ts() - channel_diag_start_time >= n_diagnose){
+            if (current_ts() - channel_diag_start_time >= (unsigned long)n_diagnose){
                 // increase n_missed by amount of messages that are not received
 
                 // amount of missed packets
@@ -577,67 +577,6 @@ redundancy_mux redundancy_mux_init(struct logger_t logger, uint16_t * listen_por
         logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "setting up udp socket %d/%d", i+1,port_count);
         mux.udp_socket_fds[i] = udp_init();
         udp_bind(mux.udp_socket_fds[i], listen_ports[i]);
-    }
-
-    // allocate memory for connected channels
-    mux.connected_channels = rmalloc(sizeof(rasta_redundancy_channel));
-    mux.channel_count = 0;
-
-    // init notifications to NULL
-    mux.notifications.on_diagnostics_available = NULL;
-    mux.notifications.on_new_connection = NULL;
-
-    // load channel that is specified in config
-    if (mux.config.redundancy.connections.count > 0){
-        logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "loading redundancy channel from config");
-        rasta_redundancy_channel new_channel = rasta_red_init(mux.logger, mux.config, mux.port_count, mux.config.general.rasta_id);
-        new_channel.associated_id = 0x0;
-
-        for (unsigned int j = 0; j < mux.config.redundancy.connections.count; ++j) {
-            logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "setting up transport channel %d/%d",
-                       j+1, mux.config.redundancy.connections.count);
-            logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "transport channel: ip=%s, port=%d",
-                       mux.config.redundancy.connections.data[j].ip, mux.config.redundancy.connections.data[j].port);
-            // no associated channel found -> received message from new partner
-            // add transport channel to redundancy channel
-            rasta_red_add_transport_channel(&new_channel, mux.config.redundancy.connections.data[j].ip,
-                                            (uint16_t )mux.config.redundancy.connections.data[j].port);
-        }
-
-
-        mux.connected_channels[mux.channel_count] = new_channel;
-        mux.channel_count++;
-    }
-
-    logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "initialization done");
-    return mux;
-}
-
-redundancy_mux redundancy_mux_init_with_devices(struct logger_t logger, struct RastaIPData * listen_ports, unsigned int port_count, struct RastaConfigInfo config){
-    redundancy_mux mux;
-
-    mux.logger = logger;
-    mux.listen_ports = listen_ports;
-    mux.port_count = port_count;
-    mux.config = config;
-
-    mux.is_open = 0;
-    mux.notifications_running = 0;
-
-    // initialize the multiplexer mutex
-    pthread_mutex_init(&mux.lock, NULL);
-
-    logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "init memory for %d listen ports", port_count);
-
-    // init and bind udp sockets + threads array
-    mux.udp_socket_fds = rmalloc(port_count * sizeof(int));
-    mux.transport_receive_threads = rmalloc(port_count * sizeof(pthread_t));
-
-    // set up udp sockets
-    for (unsigned int i = 0; i < port_count; ++i) {
-        logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "setting up udp socket %d/%d", i+1,port_count);
-        mux.udp_socket_fds[i] = udp_init();
-        udp_bind_device(mux.udp_socket_fds[i], (uint16_t)listen_ports[i].port, listen_ports[i].ip);
     }
 
     // allocate memory for connected channels
@@ -940,7 +879,7 @@ void redundancy_mux_remove_channel(redundancy_mux * mux, unsigned long channel_i
  * @param redundancy_channel_index the index of the redundancy channel inside the mux connected_channels array
  * @return amount of messages in the queue
  */
-unsigned int get_queue_msg_count(redundancy_mux * mux, int redundancy_channel_index){
+unsigned int get_queue_msg_count(redundancy_mux * mux, unsigned int redundancy_channel_index){
     pthread_mutex_lock(&mux->lock);
     if (redundancy_channel_index > mux->channel_count -1){
         // channel does not exist anymore
@@ -963,7 +902,7 @@ unsigned int get_queue_msg_count(redundancy_mux * mux, int redundancy_channel_in
 
 struct RastaPacket redundancy_mux_retrieve_all(redundancy_mux * mux){
     logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux retrieve all", "waiting for message on any connection");
-    int current_index = 0;
+    unsigned int current_index = 0;
     while (1){
         if (mux->channel_count == 0){
             // if no channel are connected yet, do noting until a channel is available

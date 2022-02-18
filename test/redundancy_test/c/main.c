@@ -114,7 +114,6 @@ int main(int argc, char *argv[]){
 
         printf("Initializing client 2...\n");
         mux = redundancy_mux_init_(logger, info);
-        //mux = redundancy_mux_init_with_devices(logger, listenPortsClient2, 2, info);
 
         //redundancy_mux_set_config_id(&mux, SERVER_ID);
         redundancy_mux_add_channel(&mux, SERVER_ID, serverConnection);

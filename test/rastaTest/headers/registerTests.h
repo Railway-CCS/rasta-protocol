@@ -2,7 +2,7 @@
 #define RASTA_TEST_H
 
 #include <CUnit/Basic.h>
-#include "gradle_cunit_register.h"
+
 // INCLUDE TESTS
 #include "rastamoduleTest.h"
 #include "rastamd4Test.h"

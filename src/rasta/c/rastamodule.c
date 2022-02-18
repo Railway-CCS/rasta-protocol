@@ -136,7 +136,6 @@ void packFields(struct RastaByteArray result, struct RastaPacket packet) {
 
 
 struct RastaByteArray rastaModuleToBytes(struct RastaPacket packet, rasta_hashing_context_t * hashing_context) {
-    unsigned char temp[4];
     struct RastaByteArray result;
     result = allocateBytes(packet, hashing_context);
 
