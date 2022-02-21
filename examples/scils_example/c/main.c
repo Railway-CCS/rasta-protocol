@@ -58,6 +58,7 @@ void onShowSignalAspect(scils_t * ls, char * sender, scils_signal_aspect signal_
 }
 
 void onSignalAspectStatus(scils_t * ls, char * sender, scils_signal_aspect signal_aspect){
+    (void)ls;
     printf("Received location status from %s. LS showing main = 0x%02X.\n",sci_get_name_string(sender), signal_aspect.main);
 }
 

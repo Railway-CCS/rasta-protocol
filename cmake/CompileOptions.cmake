@@ -8,28 +8,6 @@ set(DEFAULT_PROJECT_OPTIONS
     POSITION_INDEPENDENT_CODE ON
 )
 
-
-#
-# Include directories
-#
-
-set(DEFAULT_INCLUDE_DIRECTORIES)
-
-
-#
-# Libraries
-#
-
-set(DEFAULT_LIBRARIES)
-
-
-#
-# Compile definitions
-#
-
-set(DEFAULT_COMPILE_DEFINITIONS)
-
-
 #
 # Compile options
 #
@@ -70,10 +48,3 @@ if ("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_C_COMPILER_ID}" MATCHES "
             >
     )
 endif ()
-
-
-#
-# Linker options
-#
-
-set(DEFAULT_LINKER_OPTIONS)

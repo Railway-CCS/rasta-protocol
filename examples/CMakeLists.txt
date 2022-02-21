@@ -3,17 +3,23 @@ if(BUILD_LOCAL_EXAMPLES)
 # scip_example on localhost
 add_executable(scip_example_local
                 examples_localhost/c/scip.c)
+set_target_properties(scip_example_local PROPERTIES ${DEFAULT_PROJECT_OPTIONS})
+target_compile_options(scip_example_local PRIVATE ${DEFAULT_COMPILE_OPTIONS})
 target_link_libraries(scip_example_local rasta)
 
 
 # scils_example on localhost
 add_executable(scils_example_local
                 examples_localhost/c/scils.c)
+set_target_properties(scils_example_local PROPERTIES ${DEFAULT_PROJECT_OPTIONS})
+target_compile_options(scils_example_local PRIVATE ${DEFAULT_COMPILE_OPTIONS})
 target_link_libraries(scils_example_local rasta)
 
 # rasta_example_new on localhost
 add_executable(rasta_example_local
                 examples_localhost/c/rasta.c)
+set_target_properties(rasta_example_local PROPERTIES ${DEFAULT_PROJECT_OPTIONS})
+target_compile_options(rasta_example_local PRIVATE ${DEFAULT_COMPILE_OPTIONS})
 target_link_libraries(rasta_example_local rasta)
 
 # Copy RaSTA configs to build directory

@@ -53,6 +53,7 @@ void onChangeLocation(scip_t * p, char * sender, scip_point_target_location loca
 }
 
 void onLocationStatus(scip_t * p, char * sender, scip_point_location location){
+    (void)p;
     printf("Received location status from %s. Point is at position 0x%02X.\n",sci_get_name_string(sender), location);
 }
 

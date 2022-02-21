@@ -36,7 +36,7 @@ int client1 = 1;
 int client2 = 1;
 
 void onConnectionStateChange(struct rasta_notification_result *result) {
-    printf("\n Connectionstate change (remote: %lu)", result->connection.remote_id);
+    printf("\n Connectionstate change (remote: %u)", result->connection.remote_id);
 
     switch (result->connection.current_state) {
         case RASTA_CONNECTION_CLOSED:
@@ -89,16 +89,18 @@ void onConnectionStateChange(struct rasta_notification_result *result) {
         case RASTA_CONNECTION_RETRRUN:
             printf("\nCONNECTION_RETRRUN \n\n");
             break;
+        default:
+            break;
     }
 
 }
 
 void onHandshakeCompleted(struct rasta_notification_result *result){
-    printf("Handshake complete, state is now UP (with ID 0x%lX)\n", result->connection.remote_id);
+    printf("Handshake complete, state is now UP (with ID 0x%X)\n", result->connection.remote_id);
 }
 
 void onTimeout(struct rasta_notification_result *result){
-    printf("Entity 0x%lX had a heartbeat timeout!\n", result->connection.remote_id);
+    printf("Entity 0x%X had a heartbeat timeout!\n", result->connection.remote_id);
 }
 
 void onReceive(struct rasta_notification_result *result) {
@@ -107,7 +109,7 @@ void onReceive(struct rasta_notification_result *result) {
     switch (result->connection.my_id) {
         case ID_R:
             //Server
-            printf("\nReceived data from Client %lu", result->connection.remote_id);
+            printf("\nReceived data from Client %u", result->connection.remote_id);
 
             p = sr_get_received_data(result->handle,&result->connection);
 
@@ -151,7 +153,7 @@ void onReceive(struct rasta_notification_result *result) {
 
             break;
         case ID_S1: case ID_S2:
-            printf("\nReceived data from Server %lu", result->connection.remote_id);
+            printf("\nReceived data from Server %u", result->connection.remote_id);
 
             p = sr_get_received_data(result->handle,&result->connection);
 
@@ -159,6 +161,8 @@ void onReceive(struct rasta_notification_result *result) {
             printf("\nMsg: %s", p.appMessage.bytes);
 
             printf("\n\n\n");
+            break;
+        default:
             break;
     }
 }
