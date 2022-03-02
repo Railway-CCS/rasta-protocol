@@ -37,7 +37,7 @@ void generateSiphash24(const unsigned char* data, int data_length, const unsigne
 #define cROUNDS 2
 #define dROUNDS 4
 
-#define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
+#define ROTL(x, b) (((x) << (b)) | ((uint64_t)(x) >> (64 - (b))))
 
 #define U32TO8_LE(p, v)                                                        \
     (p)[0] = (uint8_t)((v));                                                   \
@@ -194,7 +194,7 @@ int siphash(const uint8_t *in, const size_t inlen, const uint8_t *k,
         case 1:
             b |= ((uint64_t)in[0]);
             break;
-        case 0:
+        default:
             break;
     }
 
@@ -277,7 +277,7 @@ int halfsiphash(const uint8_t *in, const size_t inlen, const uint8_t *k,
         case 1:
             b |= ((uint32_t)in[0]);
             break;
-        case 0:
+        default:
             break;
     }
 

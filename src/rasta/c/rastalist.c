@@ -38,7 +38,7 @@ void rastalist_remove(struct RastaList *list, unsigned int id) {
         return;
     }
 
-    for (size_t i = id; i < list->size -1; i++) {
+    for (unsigned int i = id; i < list->size -1; i++) {
         list->data[i] = list->data[i+1];
 
     }
@@ -71,7 +71,7 @@ struct rasta_connection * rastalist_getConnectionByRemote(struct RastaList *list
 int rastalist_getConnectionId(struct RastaList *list, unsigned long remote_id) {
     int id = -1;
 
-    for (size_t i = 0; i < list->size; i++) {
+    for (unsigned int i = 0; i < list->size; i++) {
         if (list->data[i].remote_id == remote_id) {
             id = i;
             break;

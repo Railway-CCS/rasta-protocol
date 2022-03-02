@@ -125,7 +125,7 @@ int version_accepted(struct rasta_receive_handle *h, const char version[4]){
             }
         }
     }*/
-    for (size_t i = 0; i < h->accepted_version.count; ++i) {
+    for (unsigned int i = 0; i < h->accepted_version.count; ++i) {
         if (compare_version(h->accepted_version.data[i].c, version) == 0){
             // match, version is in accepted version list
             return 1;
@@ -199,12 +199,12 @@ void send_RetransmissionResponse(redundancy_mux *mux, struct rasta_connection * 
 
 
 
-unsigned int sr_retr_data_available(struct logger_t *logger, struct rasta_connection * connection){
+unsigned int sr_retr_data_available(struct logger_t *logger,struct rasta_connection * connection){
     (void)logger;
     return fifo_get_size(connection->fifo_retr);
 }
 
-unsigned int sr_rasta_send_data_available(struct logger_t *logger, struct rasta_connection * connection){
+unsigned int sr_rasta_send_data_available(struct logger_t *logger,struct rasta_connection * connection){
     (void)logger;
     return fifo_get_size(connection->fifo_send);
 }
@@ -278,7 +278,7 @@ void sr_add_app_messages_to_buffer(struct rasta_receive_handle *h, struct rasta_
     logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA add to buffer", "received %d application messages", received_data.count);
 
 
-    for (size_t i = 0; i < received_data.count; ++i) {
+    for (unsigned int i = 0; i < received_data.count; ++i) {
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA add to buffer", "received msg: %s", received_data.data_array[i]);
 
         rastaApplicationMessage * elem = rmalloc(sizeof(rastaApplicationMessage));
@@ -1291,7 +1291,7 @@ int event_connection_expired(void * carry_data) {
 
         // T_i expired -> close connection
         sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_TIMEOUT, 0);
-        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "T_i timer expired - \e[91mdisconnected\e[0m");
+        logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "T_i timer expired - \033[91mdisconnected\033[0m");
     }
 
     disable_timed_event(connection->send_heartbeat_event);
@@ -1299,7 +1299,7 @@ int event_connection_expired(void * carry_data) {
     return 0;
 }
 
-char heartbeat_send_event(void * carry_data) {
+int heartbeat_send_event(void * carry_data) {
     struct timed_event_data * data = carry_data;
     struct rasta_heartbeat_handle *h = (struct rasta_heartbeat_handle*) data->handle;
 
@@ -1364,7 +1364,7 @@ int data_send_event(void * carry_data) {
                             msg_queue);
 
 
-                for (size_t i = 0; i < msg_queue; i++) {
+                for (unsigned int i = 0; i < msg_queue; i++) {
 
                     struct RastaByteArray * elem;
                     elem = fifo_pop(connection->fifo_send);
@@ -1457,7 +1457,7 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
 
 void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPData *channels) {
 
-    for (size_t i = 0; i < handle->connections.size; i++) {
+    for (unsigned int i = 0; i < handle->connections.size; i++) {
         //TODO: Error handling
         if (handle->connections.data[i].remote_id == id) return;
     }
@@ -1524,7 +1524,7 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
             return;
         }
 
-        for (size_t i = 0; i < app_messages.count; ++i) {
+        for (unsigned int i = 0; i < app_messages.count; ++i) {
             struct RastaByteArray msg;
             msg = app_messages.data_array[i];
 
@@ -1595,7 +1595,7 @@ void sr_cleanup(struct rasta_handle *h) {
 
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Cleanup", "Threads joined");
 
-    for (size_t i = 0; i < h->connections.size; i++) {
+    for (unsigned int i = 0; i < h->connections.size; i++) {
         struct rasta_connection connection = h->connections.data[i];
         // free memory allocated for diagnostic intervals
         rfree(connection.diagnostic_intervals);

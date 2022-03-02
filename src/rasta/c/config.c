@@ -410,7 +410,7 @@ struct RastaIPData extractIPData(char data[256], int arrayIndex) {
         pos = 1;
     } else {
         //check ip format
-        for (size_t i = 0; i < strlen(data); i++) {
+        for (unsigned int i = 0; i < strlen(data); i++) {
             if (isdigit(data[i])) {
                 numbers++;
                 if (numbers > 3) {
@@ -444,7 +444,7 @@ struct RastaIPData extractIPData(char data[256], int arrayIndex) {
 
     //get port
     int j = 0;
-    for (size_t i = pos+1; i < strlen(data); i++) {
+    for (unsigned int i = pos+1; i < strlen(data); i++) {
         if (isdigit(data[i])) {
             port[j] = data[i];
         }
@@ -647,7 +647,7 @@ void config_setstd(struct RastaConfig * cfg) {
         cfg->values.redundancy.connections.data = rmalloc(sizeof(struct RastaIPData) * entr.value.array.count);
         cfg->values.redundancy.connections.count = entr.value.array.count;
         //check valid format
-        for (size_t i = 0; i < entr.value.array.count; i++) {
+        for (unsigned int i = 0; i < entr.value.array.count; i++) {
             struct RastaIPData ip = extractIPData(entr.value.array.data[i].c, i);
             if (ip.port == 0) {
                 logger_log(&cfg->logger,LOG_LEVEL_ERROR, cfg->filename, "RASTA_REDUNDANCY_CONNECTIONS may only contain strings in format ip:port or *:port");
