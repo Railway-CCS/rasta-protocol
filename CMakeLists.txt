@@ -9,6 +9,7 @@ option(BUILD_DOCUMENTATION "Generate documentation" OFF)
 option(BUILD_LOCAL_EXAMPLES "Build the RaSTA/SCI examples the run on localhost" ON)
 option(BUILD_REMOTE_EXAMPLES "Build the RaSTA/SCI examples that communicate in a network" ON)
 option(EXAMPLE_IP_OVERRIDE "Use IPs from environment variables in RaSTA/SCI examples" OFF)
+option(ENABLE_CODE_COVERAGE "Provide command to generate code coverage report" OFF)
 option(ENABLE_STATIC_ANALYSIS "Run cppcheck along with the compiler" OFF)
 
 if(ENABLE_STATIC_ANALYSIS)
@@ -20,6 +21,24 @@ set(VALGRIND_COMMAND_OPTIONS "--leak-check=full --show-leak-kinds=all")
 include(CTest)
 include(GNUInstallDirs)
 
+if(ENABLE_CODE_COVERAGE)
+    link_libraries(-lgcov)
+    add_compile_options(-fprofile-arcs -ftest-coverage)
+
+    find_program(LCOV lcov)
+    find_program(GENHTML genhtml)
+    if(EXISTS ${LCOV} AND EXISTS ${GENHTML})
+        add_custom_target(coverage_report
+            COMMAND "${LCOV}" "--base-directory" "${CMAKE_SOURCE_DIR}"
+                              "--no-external"
+                              "--directory" "."
+                              "--capture"
+                              "--output-file" "app.info"
+            COMMAND "${GENHTML}" "app.info" "-o" "ccHTML"
+            COMMENT "Generate HTML files from preprocessed code coverage data"
+            VERBATIM)
+    endif()
+endif(ENABLE_CODE_COVERAGE)
 
 #
 # Compiler settings and options
