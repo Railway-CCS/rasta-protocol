@@ -42,7 +42,7 @@ elif [ "$1" == "server" ]; then
     # run scip example
     echo "Executing SCI-P example server..."
     docker exec -it rasta-server /bin/sh -c "cd /opt/rasta-c/build/bin/exe/examples && ./scip_example s"
-  elif [ "$3" == "rasta" ]; then
+  elif [ "$2" == "rasta" ]; then
     # run rasta example
     echo "Executing RaSTA example receiver..."
     docker exec -it rasta-server /bin/sh -c "cd /opt/rasta-c/build/bin/exe/examples && ./rasta_example r"
@@ -62,7 +62,7 @@ elif [ "$1" == "client1" ]; then
     # run scip example
     echo "Executing SCI-P example server..."
     docker exec -it rasta-client1 /bin/sh -c "cd /opt/rasta-c/build/bin/exe/examples && ./scip_example c"
-  elif [ "$3" == "rasta" ]; then
+  elif [ "$2" == "rasta" ]; then
     # run rasta example
     echo "Executing RaSTA example receiver..."
     docker exec -it rasta-client1 /bin/sh -c "cd /opt/rasta-c/build/bin/exe/examples && ./rasta_example s1"
@@ -74,7 +74,7 @@ elif [ "$1" == "client2" ]; then
   # start container if not already running
   docker start rasta-client2
 
-  if [ "$3" == "rasta" ]; then
+  if [ "$2" == "rasta" ]; then
     # run rasta example
     echo "Executing RaSTA example sender 2..."
     docker exec -it rasta-client2 /bin/sh -c "cd /opt/rasta-c/build/bin/exe/examples && ./rasta_example s1"
