@@ -34,4 +34,5 @@ ENV SERVER_CH1=${SERVER_CH1} \
     SERVER_CH2=${SERVER_CH2}
 
 # build librasta and examples
-RUN cd /opt/rasta-c/ && mkdir -p build && cd build && cmake -DEXAMPLE_IP_OVERRIDE:BOOL=ON .. && make
+RUN cd /opt/rasta-c/ && mkdir -p build && cd build && \
+    cmake -DEXAMPLE_IP_OVERRIDE:BOOL=ON -DBUILD_TESTING:BOOL=OFF .. && make
