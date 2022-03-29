@@ -52,5 +52,12 @@ int main() {
     f_events[0].meta_information.callback = event_read;
     f_events[0].fd = STDIN_FILENO;
     f_events[0].meta_information.carry_data = t_events + 1;
-    start_event_loop(t_events, 2, f_events, 1);
+
+    struct event_container container;
+    init_event_container(&container);
+    add_timed_event(&container, &(t_events[0]));
+    add_timed_event(&container, &(t_events[1]));
+    add_fd_event(&container, &(f_events[0]));
+
+    start_event_loop(&container);
 }

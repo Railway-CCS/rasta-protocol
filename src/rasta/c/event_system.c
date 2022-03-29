@@ -16,19 +16,21 @@ uint64_t get_nanotime() {
  * @param len the length of the fd event array
  * @return the amount of fd events that got called or -1 to terminate the event loop
  */
-int event_system_sleep(uint64_t time_to_wait, fd_event* fd_events[], int len) {
+int event_system_sleep(uint64_t time_to_wait, event_container* events) {
     struct timeval tv;
     tv.tv_sec = time_to_wait / 1000000000;
     tv.tv_usec = (time_to_wait / 1000) % 1000000;
     int nfds = 0;
     // find highest fd
-    for (int i = 0; i < len; i++) nfds = nfds < fd_events[i]->fd ? fd_events[i]->fd : nfds;
+    for (fd_event* event = events->fd_event_list; event; event = (fd_event*) event->meta_information.next) {
+        nfds = nfds < event->fd ? event->fd : nfds;
+    }
     // set the fd to watch
     fd_set on_readable;
     FD_ZERO(&on_readable);
-    for (int i = 0; i < len; i++) {
-        if (fd_events[i]->meta_information.enabled) {
-            FD_SET(fd_events[i]->fd, &on_readable);
+    for (fd_event* event = events->fd_event_list; event; event = (fd_event*) event->meta_information.next) {
+        if (event->meta_information.enabled) {
+            FD_SET(event->fd, &on_readable);
         }
     }
     // wait
@@ -37,9 +39,9 @@ int event_system_sleep(uint64_t time_to_wait, fd_event* fd_events[], int len) {
         // syscall error or error on select()
         return -1;
     }
-    for (int i = 0; i < len; i++) {
-        if (fd_events[i]->meta_information.enabled && FD_ISSET(fd_events[i]->fd, &on_readable)) {
-            if (fd_events[i]->meta_information.callback(fd_events[i]->meta_information.carry_data)) return -1;
+    for (fd_event* event = events->fd_event_list; event; event = (fd_event*) event->meta_information.next) {
+        if (event->meta_information.enabled && FD_ISSET(event->fd, &on_readable)) {
+            if (event->meta_information.callback(event->meta_information.carry_data)) return -1;
         }
     }
     return result;
@@ -62,22 +64,22 @@ void reschedule_event(timed_event * event) {
  * @param cur_time the current time
  * @return uint64_t the time to wait
  */
-uint64_t calc_next_timed_event(struct timed_event* timed_events[], int len, int * next_event_index, uint64_t cur_time) {
+uint64_t calc_next_timed_event(event_container* events, timed_event** next_event, uint64_t cur_time) {
     uint64_t time_to_wait = UINT64_MAX;
-    for (int i = 0; i < len; i++) {
-        if (timed_events[i]->meta_information.enabled) {
-            uint64_t continue_at = timed_events[i]->__last_call + timed_events[i]->interval;
+    for (timed_event* event = events->timed_event_list; event; event = (timed_event*) event->meta_information.next) {
+        if (event->meta_information.enabled) {
+            uint64_t continue_at = event->__last_call + event->interval;
             if (continue_at <= cur_time) {
-                if (next_event_index) {
-                    *next_event_index = i;
+                if (next_event) {
+                    *next_event = event;
                 }
                 return 0;
             }
             else {
                 uint64_t new_time_to_wait = continue_at - cur_time;
                 if (new_time_to_wait < time_to_wait) {
-                    if (next_event_index) {
-                        *next_event_index = i;
+                    if (next_event) {
+                        *next_event = event;
                     }
                     time_to_wait = new_time_to_wait;
                 }
@@ -89,31 +91,29 @@ uint64_t calc_next_timed_event(struct timed_event* timed_events[], int len, int 
 
 /**
  * starts an event loop with the given events
- * the events may not be removed while the loop is running but can be modified
- * @param timed_events an array with the looping events to handle
- * @param timed_events_len the length of the timed_event array
- * @param fd_events an array with the events, that get called whenever the given fd gets readable
- * @param fd_events_len the length of the fd event array
+ * @param events a pointer to the event "container",
+ * which contains two linked lists filled with events
  */
-void start_event_loop(timed_event* timed_events[], int timed_events_len, fd_event* fd_events[], int fd_events_len) {
+void start_event_loop(event_container* events) {
     uint64_t cur_time = get_nanotime();
-    for (int i = 0; i < timed_events_len; i++) {
-        timed_events[i]->__last_call = cur_time;
+    // linked list foreach
+    for (timed_event* event = events->timed_event_list; event; event = (timed_event*) event->meta_information.next) {
+        event->__last_call = cur_time;
     }
     while (1) {
-        int next_event;
+        timed_event* next_event;
         cur_time = get_nanotime();
-        uint64_t time_to_wait = calc_next_timed_event(timed_events, timed_events_len, &next_event, cur_time);
+        uint64_t time_to_wait = calc_next_timed_event(events, &next_event, cur_time);
         if (time_to_wait == UINT64_MAX) {
             // there are no active events
-            int result = event_system_sleep(1000, fd_events, fd_events_len);
+            int result = event_system_sleep(1000, events);
             if (result == -1) {
                 break;
             }
             continue;
         }
         else if (time_to_wait != 0) {
-            int result = event_system_sleep(time_to_wait, fd_events, fd_events_len);
+            int result = event_system_sleep(time_to_wait, events);
             if (result == -1) {
                 // select failed, exit loop
                 return;
@@ -125,9 +125,9 @@ void start_event_loop(timed_event* timed_events[], int timed_events_len, fd_even
             }
         }
         // fire event and exit in case it returns something else than 0
-        if (timed_events[next_event]->meta_information.callback(timed_events[next_event]->meta_information.carry_data)) break;
+        if (next_event->meta_information.callback(next_event->meta_information.carry_data)) break;
         // update timed_event::__last_call
-        timed_events[next_event]->__last_call = cur_time + time_to_wait;
+        next_event->__last_call = cur_time + time_to_wait;
     }
 }
 
@@ -164,13 +164,22 @@ void disable_fd_event(fd_event* event) {
     event->meta_information.enabled = 0;
 }
 
-void linked_list_add(struct event_shared_information** linked_list, struct event_shared_information* to_add) {
-    struct event_shared_information* old_first = *linked_list;
-    to_add->next = old_first;
-    to_add->prev_mem_addr = linked_list;
-    if (old_first) {
-        old_first->prev_mem_addr = &to_add;
-    }
+/**
+ * initializes an empty event container
+ * @param container the container to initialize
+ */
+void init_event_container(event_container* container) {
+    container->fd_event_list = NULL;
+    container->fd_event_list_append_to = &container->fd_event_list;
+    container->timed_event_list = NULL;
+    container->timed_event_list_append_to = &container->timed_event_list;
+}
+
+void linked_list_add(struct event_shared_information* linked_list, struct event_shared_information*** linked_list_append_to, struct event_shared_information* to_add) {
+    to_add->next = NULL;
+    to_add->prev_mem_addr = *linked_list_append_to;
+    **linked_list_append_to = to_add;
+    *linked_list_append_to = &to_add->next;
 }
 
 void linked_list_remove(struct event_shared_information* to_add) {
@@ -183,7 +192,11 @@ void linked_list_remove(struct event_shared_information* to_add) {
  * @param event the event to add
  */
 void add_fd_event(event_container* container, fd_event* event) {
-    linked_list_add((struct event_shared_information**) &container->fd_event_list, &event->meta_information);
+    linked_list_add(
+        (struct event_shared_information*) container->fd_event_list,
+        (struct event_shared_information***) &container->fd_event_list_append_to,
+        &event->meta_information
+    );
 }
 
 /**
@@ -200,7 +213,11 @@ void remove_fd_event(fd_event* event) {
  * @param event the event to add
  */
 void add_timed_event(event_container* container, timed_event* event) {
-    linked_list_add((struct event_shared_information**) &container->fd_event_list, &event->meta_information);
+    linked_list_add(
+        (struct event_shared_information*) container->timed_event_list,
+        (struct event_shared_information***) &container->timed_event_list_append_to,
+        &event->meta_information
+    );
 }
 
 /**

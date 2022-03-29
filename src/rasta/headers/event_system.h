@@ -40,19 +40,24 @@ typedef struct fd_event {
 typedef struct event_container {
     // the fd_events kept in the container as a linked list
     fd_event* fd_event_list;
+    fd_event** fd_event_list_append_to;
     // the timed_events kept in the container as a linked list
     timed_event* timed_event_list;
+    timed_event** timed_event_list_append_to;
 } event_container;
 
 /**
- * starts an event loop with the given events
- * the events may not be removed while the loop is running, but can be modified
- * @param timed_events an array with the looping events to handle
- * @param timed_events_len the length of the timed_event array
- * @param fd_events an array with the events, that get called whenever the given fd gets readable
- * @param fd_events_len the length of the fd event array
+ * initializes an empty event container
+ * @param container the container to initialize
  */
-void start_event_loop(timed_event* timed_events[], int timed_events_len, fd_event* fd_events[], int fd_events_len);
+void init_event_container(event_container* container);
+
+/**
+ * starts an event loop with the given events
+ * @param events a pointer to the event "container",
+ * which contains two linked lists filled with events
+ */
+void start_event_loop(event_container* events);
 
 /**
  * reschedules the event to the current time + the event interval

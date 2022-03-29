@@ -1685,23 +1685,24 @@ void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
         channel_event_data[i].h = h;
     }
 
-    timed_event* t_event_ptr_arr[CONNECTION_EVENTS + OTHER_EVENTS];
-    fd_event* fd_event_ptr_arr[len + channel_event_data_len];
+    struct event_container container;
+    init_event_container(&container);
+
     for (int i = 0; i < CONNECTION_EVENTS; i++) {
-        t_event_ptr_arr[i] = &(t_events[i]);
+        add_timed_event(&container, &(t_events[i]));
     }
     for (int i = 0; i < OTHER_EVENTS; i++) {
-        t_event_ptr_arr[CONNECTION_EVENTS + i] = &(t_events[CONNECTION_EVENTS + i]);
+        add_timed_event(&container, &(t_events[CONNECTION_EVENTS + i]));
     }
 
     for (int i = 0; i < len; i++) {
-        fd_event_ptr_arr[i] = &(extern_fd_events[i]);
+        add_fd_event(&container, &(extern_fd_events[i]));
     }
     for (int i = 0; i < channel_event_data_len; i++) {
-        fd_event_ptr_arr[len + i] = &(channel_events[i]);
+        add_fd_event(&container, &(channel_events[i]));
     }
 
-    start_event_loop(t_event_ptr_arr, CONNECTION_EVENTS + OTHER_EVENTS, fd_event_ptr_arr, len + channel_event_data_len);
+    start_event_loop(&container);
 }
 
 
