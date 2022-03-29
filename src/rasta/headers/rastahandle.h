@@ -235,6 +235,11 @@ struct rasta_handle {
     int hb_running;
 
     /**
+     * literall events used in the event loop
+     */
+    event_container events;
+
+    /**
     * pointers to functions that will be called on notifications as described in 5.2.2 and 5.5.6.4
     */
     struct rasta_notification_ptr notifications;

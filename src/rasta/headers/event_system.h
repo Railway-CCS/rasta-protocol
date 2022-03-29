@@ -111,6 +111,14 @@ void remove_fd_event(fd_event* event);
 void add_timed_event(event_container* container, timed_event* event);
 
 /**
+ * Adds an timed-event to an event_container but does not initialize the event timer.
+ * Use only for short time suspension of an event.
+ * @param container destination, appent here
+ * @param event the event to add
+ */
+void add_timed_event_no_time_init(event_container* container, timed_event* event);
+
+/**
  * remove an timed event from its current event container
  * @param event the event to remove
  */

@@ -208,11 +208,22 @@ void remove_fd_event(fd_event* event) {
 }
 
 /**
- * adds an timed-event to an event_container
+ * Adds an timed-event to an event_container.
  * @param container destination, appent here
  * @param event the event to add
  */
 void add_timed_event(event_container* container, timed_event* event) {
+    add_timed_event_no_time_init(container, event);
+    event->__last_call = get_nanotime();
+}
+
+/**
+ * Adds an timed-event to an event_container but does not initialize the event timer.
+ * Use only for short time suspension of an event.
+ * @param container destination, appent here
+ * @param event the event to add
+ */
+void add_timed_event_no_time_init(event_container* container, timed_event* event) {
     linked_list_add(
         (struct event_shared_information*) container->timed_event_list,
         (struct event_shared_information***) &container->timed_event_list_append_to,
