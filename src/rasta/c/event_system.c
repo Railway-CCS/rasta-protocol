@@ -27,7 +27,7 @@ int event_system_sleep(uint64_t time_to_wait, fd_event* fd_events[], int len) {
     fd_set on_readable;
     FD_ZERO(&on_readable);
     for (int i = 0; i < len; i++) {
-        if (fd_events[i]->enabled) {
+        if (fd_events[i]->meta_information.enabled) {
             FD_SET(fd_events[i]->fd, &on_readable);
         }
     }
@@ -38,8 +38,8 @@ int event_system_sleep(uint64_t time_to_wait, fd_event* fd_events[], int len) {
         return -1;
     }
     for (int i = 0; i < len; i++) {
-        if (fd_events[i]->enabled && FD_ISSET(fd_events[i]->fd, &on_readable)) {
-            if (fd_events[i]->callback(fd_events[i]->carry_data)) return -1;
+        if (fd_events[i]->meta_information.enabled && FD_ISSET(fd_events[i]->fd, &on_readable)) {
+            if (fd_events[i]->meta_information.callback(fd_events[i]->meta_information.carry_data)) return -1;
         }
     }
     return result;
@@ -65,7 +65,7 @@ void reschedule_event(timed_event * event) {
 uint64_t calc_next_timed_event(struct timed_event* timed_events[], int len, int * next_event_index, uint64_t cur_time) {
     uint64_t time_to_wait = UINT64_MAX;
     for (int i = 0; i < len; i++) {
-        if (timed_events[i]->enabled) {
+        if (timed_events[i]->meta_information.enabled) {
             uint64_t continue_at = timed_events[i]->__last_call + timed_events[i]->interval;
             if (continue_at <= cur_time) {
                 if (next_event_index) {
@@ -125,7 +125,7 @@ void start_event_loop(timed_event* timed_events[], int timed_events_len, fd_even
             }
         }
         // fire event and exit in case it returns something else than 0
-        if (timed_events[next_event]->callback(timed_events[next_event]->carry_data)) break;
+        if (timed_events[next_event]->meta_information.callback(timed_events[next_event]->meta_information.carry_data)) break;
         // update timed_event::__last_call
         timed_events[next_event]->__last_call = cur_time + time_to_wait;
     }
@@ -136,7 +136,7 @@ void start_event_loop(timed_event* timed_events[], int timed_events_len, fd_even
  * @param event the event to enable
  */
 void enable_timed_event(timed_event* event) {
-    event->enabled = 1;
+    event->meta_information.enabled = 1;
     reschedule_event(event);
 }
 
@@ -145,7 +145,7 @@ void enable_timed_event(timed_event* event) {
  * @param event the event to disable
  */
 void disable_timed_event(timed_event* event) {
-    event->enabled = 0;
+    event->meta_information.enabled = 0;
 }
 
 /**
@@ -153,7 +153,7 @@ void disable_timed_event(timed_event* event) {
  * @param event the event to enable
  */
 void enable_fd_event(fd_event* event) {
-    event->enabled = 1;
+    event->meta_information.enabled = 1;
 }
 
 /**
@@ -161,5 +161,52 @@ void enable_fd_event(fd_event* event) {
  * @param event the event to enable
  */
 void disable_fd_event(fd_event* event) {
-    event->enabled = 0;
+    event->meta_information.enabled = 0;
+}
+
+void linked_list_add(struct event_shared_information** linked_list, struct event_shared_information* to_add) {
+    struct event_shared_information* old_first = *linked_list;
+    to_add->next = old_first;
+    to_add->prev_mem_addr = linked_list;
+    if (old_first) {
+        old_first->prev_mem_addr = &to_add;
+    }
+}
+
+void linked_list_remove(struct event_shared_information* to_add) {
+    *to_add->prev_mem_addr = to_add->next;
+}
+
+/**
+ * adds an io-event to an event_container
+ * @param container destination, appent here
+ * @param event the event to add
+ */
+void add_fd_event(event_container* container, fd_event* event) {
+    linked_list_add((struct event_shared_information**) &container->fd_event_list, &event->meta_information);
+}
+
+/**
+ * removes an io-event from its current event container
+ * @param event the event to remove
+ */
+void remove_fd_event(fd_event* event) {
+    linked_list_remove(&event->meta_information);
+}
+
+/**
+ * adds an timed-event to an event_container
+ * @param container destination, appent here
+ * @param event the event to add
+ */
+void add_timed_event(event_container* container, timed_event* event) {
+    linked_list_add((struct event_shared_information**) &container->fd_event_list, &event->meta_information);
+}
+
+/**
+ * remove an timed event from its current event container
+ * @param event the event to remove
+ */
+void remove_timed_event(timed_event* event) {
+    linked_list_remove(&event->meta_information);
 }

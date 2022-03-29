@@ -1635,30 +1635,30 @@ void sr_cleanup(struct rasta_handle *h) {
 #define IO_INTERVAL 10000
 void init_connection_events(timed_event * t_events, int connection_index, struct rasta_handle * h) {
     int i = connection_index;
-    t_events[0].callback = event_connection_expired;
-    t_events[0].carry_data = &(carry_data[i * 2]);
+    t_events[0].meta_information.callback = event_connection_expired;
+    t_events[0].meta_information.carry_data = &(carry_data[i * 2]);
     t_events[0].interval = h->heartbeat_handle->config.t_max * 1000000lu;
-    t_events[0].enabled = 0;
+    t_events[0].meta_information.enabled = 0;
     carry_data[i * EVENTS_PER_CONNECTION].handle = h->heartbeat_handle;
     carry_data[i * EVENTS_PER_CONNECTION].connection_index = i;
 
-    t_events[1].callback = heartbeat_send_event;
-    t_events[1].carry_data = &(carry_data[i * EVENTS_PER_CONNECTION + 1]);
+    t_events[1].meta_information.callback = heartbeat_send_event;
+    t_events[1].meta_information.carry_data = &(carry_data[i * EVENTS_PER_CONNECTION + 1]);
     t_events[1].interval = h->heartbeat_handle->config.t_h * 1000000lu;
-    t_events[1].enabled = 0;
+    t_events[1].meta_information.enabled = 0;
     carry_data[i * EVENTS_PER_CONNECTION + 1].handle = h->heartbeat_handle;
     carry_data[i * EVENTS_PER_CONNECTION + 1].connection_index = i;
 
     // busy wait like io events TODO: move to a position so it is only called when needed
-    t_events[2].callback = data_send_event;
+    t_events[2].meta_information.callback = data_send_event;
     t_events[2].interval = IO_INTERVAL * 1000lu;
-    t_events[2].enabled = 1;
-    t_events[2].carry_data = h->send_handle;
+    t_events[2].meta_information.enabled = 1;
+    t_events[2].meta_information.carry_data = h->send_handle;
 
-    t_events[3].callback = on_readable_event;
+    t_events[3].meta_information.callback = on_readable_event;
     t_events[3].interval = IO_INTERVAL * 1000lu;
-    t_events[3].enabled = 1;
-    t_events[3].carry_data = h->receive_handle;
+    t_events[3].meta_information.enabled = 1;
+    t_events[3].meta_information.carry_data = h->receive_handle;
 }
 
 void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
@@ -1676,9 +1676,9 @@ void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len) {
     fd_event channel_events[channel_event_data_len];
     struct receive_event_data channel_event_data[channel_event_data_len];
     for (int i = 0; i < channel_event_data_len; i++) {
-        channel_events[i].enabled = 1;
-        channel_events[i].callback = channel_receive_event;
-        channel_events[i].carry_data = channel_event_data + i;
+        channel_events[i].meta_information.enabled = 1;
+        channel_events[i].meta_information.callback = channel_receive_event;
+        channel_events[i].meta_information.carry_data = channel_event_data + i;
         channel_events[i].fd = h->mux.udp_socket_fds[i];
         channel_event_data[i].channel_index = i;
         channel_event_data[i].event = channel_events + i;

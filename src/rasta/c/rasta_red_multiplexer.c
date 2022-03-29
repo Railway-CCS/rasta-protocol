@@ -372,9 +372,9 @@ char channel_timeout_event(void * carry_data) {
 void init_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux) {
     t_data->mux = mux;
     t_data->event = event;
-    event->callback = channel_timeout_event;
-    event->carry_data = t_data;
-    event->enabled = !open;
+    event->meta_information.callback = channel_timeout_event;
+    event->meta_information.carry_data = t_data;
+    event->meta_information.enabled = !open;
     event->interval = 100000;
 }
 

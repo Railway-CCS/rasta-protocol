@@ -12,26 +12,37 @@ extern "C" {  // only need to export C interface if
 // event callback pointer, return 0 to keep the loop running, everything else stops the loop
 typedef char (*event_ptr)();
 
+struct event_shared_information {
+    event_ptr callback;
+    void* carry_data;
+    struct event_shared_information* next;
+    struct event_shared_information** prev_mem_addr;
+    char enabled;
+};
+
 /**
  * contains a function pointer to a callback function and interval in microseconds
  */
 typedef struct timed_event {
-    event_ptr callback;
+    struct event_shared_information meta_information;
     uint64_t interval;
     uint64_t __last_call;
-    void* carry_data;
-    char enabled;
 } timed_event;
 
 /**
  * contains a function pointer to a callback function and a file descriptor
  */
 typedef struct fd_event {
-    event_ptr callback;
-    void* carry_data;
+    struct event_shared_information meta_information;
     int fd;
-    char enabled;
 } fd_event;
+
+typedef struct event_container {
+    // the fd_events kept in the container as a linked list
+    fd_event* fd_event_list;
+    // the timed_events kept in the container as a linked list
+    timed_event* timed_event_list;
+} event_container;
 
 /**
  * starts an event loop with the given events
@@ -73,6 +84,32 @@ void disable_timed_event(timed_event* event);
  * @param event the event to enable
  */
 void disable_fd_event(fd_event* event);
+
+/**
+ * adds an io-event to an event_container
+ * @param container destination, appent here
+ * @param event the event to add
+ */
+void add_fd_event(event_container* container, fd_event* event);
+
+/**
+ * removes an io-event from its current event container
+ * @param event the event to remove
+ */
+void remove_fd_event(fd_event* event);
+
+/**
+ * adds an timed-event to an event_container
+ * @param container destination, appent here
+ * @param event the event to add
+ */
+void add_timed_event(event_container* container, timed_event* event);
+
+/**
+ * remove an timed event from its current event container
+ * @param event the event to remove
+ */
+void remove_timed_event(timed_event* event);
 
 #ifdef __cplusplus
 }

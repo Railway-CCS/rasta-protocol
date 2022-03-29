@@ -40,17 +40,17 @@ char event_read(void * carry_data) {
 int main() {
     last_time = test_get_nanotime();
     timed_event t_events[2];
-    t_events[0].callback = send_heartbeat_event;
+    t_events[0].meta_information.callback = send_heartbeat_event;
     t_events[0].interval = heartbeat_interval;
-    t_events[0].carry_data = NULL;
+    t_events[0].meta_information.carry_data = NULL;
 
-    t_events[1].callback = disconnect_event;
+    t_events[1].meta_information.callback = disconnect_event;
     t_events[1].interval = disconnect_interval;
-    t_events[1].carry_data = NULL;
+    t_events[1].meta_information.carry_data = NULL;
 
     fd_event f_events[1];
-    f_events[0].callback = event_read;
+    f_events[0].meta_information.callback = event_read;
     f_events[0].fd = STDIN_FILENO;
-    f_events[0].carry_data = t_events + 1;
+    f_events[0].meta_information.carry_data = t_events + 1;
     start_event_loop(t_events, 2, f_events, 1);
 }

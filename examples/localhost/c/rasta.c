@@ -217,15 +217,15 @@ int main(int argc, char *argv[]){
         .schwarzenegger = &fd_events[0]
     };
 
-    fd_events[0].callback = terminator;
-    fd_events[0].carry_data = &h;
+    fd_events[0].meta_information.callback = terminator;
+    fd_events[0].meta_information.carry_data = &h;
     fd_events[0].fd = STDIN_FILENO;
-    fd_events[0].enabled = 0;
+    fd_events[0].meta_information.enabled = 0;
 
-    fd_events[1].callback = connect_on_stdin;
-    fd_events[1].carry_data = &connect_on_stdin_event_data;
+    fd_events[1].meta_information.callback = connect_on_stdin;
+    fd_events[1].meta_information.carry_data = &connect_on_stdin_event_data;
     fd_events[1].fd = STDIN_FILENO;
-    fd_events[1].enabled = 0;
+    fd_events[1].meta_information.enabled = 0;
 
     if (strcmp(argv[1], "r") == 0) {
         printf("->   R (ID = 0x%lX)\n", (unsigned long)ID_R);
