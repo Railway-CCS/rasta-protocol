@@ -175,7 +175,7 @@ void init_event_container(event_container* container) {
     container->timed_event_list_append_to = &container->timed_event_list;
 }
 
-void linked_list_add(struct event_shared_information* linked_list, struct event_shared_information*** linked_list_append_to, struct event_shared_information* to_add) {
+void linked_list_add(struct event_shared_information*** linked_list_append_to, struct event_shared_information* to_add) {
     to_add->next = NULL;
     to_add->prev_mem_addr = *linked_list_append_to;
     **linked_list_append_to = to_add;
@@ -193,7 +193,6 @@ void linked_list_remove(struct event_shared_information* to_add) {
  */
 void add_fd_event(event_container* container, fd_event* event) {
     linked_list_add(
-        (struct event_shared_information*) container->fd_event_list,
         (struct event_shared_information***) &container->fd_event_list_append_to,
         &event->meta_information
     );
@@ -225,7 +224,6 @@ void add_timed_event(event_container* container, timed_event* event) {
  */
 void add_timed_event_no_time_init(event_container* container, timed_event* event) {
     linked_list_add(
-        (struct event_shared_information*) container->timed_event_list,
         (struct event_shared_information***) &container->timed_event_list_append_to,
         &event->meta_information
     );

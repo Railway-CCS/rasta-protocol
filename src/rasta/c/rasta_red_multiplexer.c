@@ -274,7 +274,7 @@ void receive_packet(redundancy_mux * mux, int channel_id){
     rfree(buffer);
 }
 
-int channel_receive_event(void * carry_data) {
+char channel_receive_event(void * carry_data) {
     struct receive_event_data * data = carry_data;
     struct rasta_handle * h = data->h;
     unsigned int mux_channel_count = h->mux.channel_count;
@@ -327,7 +327,7 @@ int channel_receive_event(void * carry_data) {
     return 0;
 }
 
-int channel_timeout_event(void * carry_data) {
+char channel_timeout_event(void * carry_data) {
     struct timeout_event_data * data = carry_data;
     redundancy_mux* mx = data->mux;
     if (!mx->is_open) return 0;
