@@ -107,19 +107,27 @@ struct diagnostic_interval {
     unsigned int t_alive_message_count;
 };
 
+/**
+ * The data that is passed to most timed events.
+ */
+struct timed_event_data {
+    void * handle;
+    int connection_index;
+};
+
 struct rasta_connection{
 
     /**
      * the event operating the heartbeats on this connection
      */
-    timed_event* send_heartbeat_event;
-    struct timed_event_data* heartbeat_carry_data;
+    timed_event send_heartbeat_event;
+    struct timed_event_data heartbeat_carry_data;
 
     /**
      * the event watching the connection timeout
      */
-    timed_event* timeout_event;
-    struct timed_event_data* timeout_carry_data;
+    timed_event timeout_event;
+    struct timed_event_data timeout_carry_data;
 
     /**
      * 1 if the process for sending heartbeats should be paused, otherwise 0
