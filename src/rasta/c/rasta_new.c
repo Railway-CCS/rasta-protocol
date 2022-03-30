@@ -677,7 +677,15 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
                 fire_on_connection_state_change(sr_create_notification_result(h->handle, connection));
             }
             else {
+                for (unsigned int i = 0; i < h->connections->size; i++) {
+                    remove_timed_event(&h->connections->data[i].send_heartbeat_event);
+                    remove_timed_event(&h->connections->data[i].timeout_event);
+                }
                 unsigned int id = (unsigned int)rastalist_addConnection(h->connections, new_con);
+                for (unsigned int i = 0; i < h->connections->size; i++) {
+                    add_timed_event(&h->handle->events, &h->connections->data[i].send_heartbeat_event);
+                    add_timed_event(&h->handle->events, &h->connections->data[i].timeout_event);
+                }
                 struct rasta_connection * new_con_list_ptr = rastalist_getConnection(h->connections, id);
                 fire_on_connection_state_change(sr_create_notification_result(h->handle, new_con_list_ptr));
                 logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: ConnectionRequest", "Add new client %d", receivedPacket.sender_id);
@@ -813,6 +821,8 @@ void handle_discreq(struct rasta_receive_handle *h, struct rasta_connection *con
     logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA HANDLE: DisconnectionRequest", "received DiscReq");
 
     connection->current_state = RASTA_CONNECTION_CLOSED;
+    remove_timed_event(&connection->send_heartbeat_event);
+    remove_timed_event(&connection->timeout_event);
     sr_reset_connection(connection,connection->remote_id,h->info);
 
     // remove redundancy channel
@@ -1458,40 +1468,40 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
     handle->notifications.on_heartbeat_timeout = NULL;
 }
 
-void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPData *channels) {
+void sr_connect(struct rasta_handle* h, unsigned long id, struct RastaIPData* channels) {
 
-    for (unsigned int i = 0; i < handle->connections.size; i++) {
+    for (unsigned int i = 0; i < h->connections.size; i++) {
         //TODO: Error handling
-        if (handle->connections.data[i].remote_id == id) return;
+        if (h->connections.data[i].remote_id == id) return;
     }
     //TODO: const ports in redundancy? (why no dynamic port length)
-    redundancy_mux_add_channel(&handle->mux,id,channels);
+    redundancy_mux_add_channel(&h->mux,id,channels);
 
     struct rasta_connection new_con;
-    sr_init_connection(&new_con,id,handle->config.values.general,handle->config.values.sending,&handle->logger, RASTA_ROLE_CLIENT);
-    redundancy_mux_set_config_id(&handle->mux, id);
+    sr_init_connection(&new_con,id,h->config.values.general,h->config.values.sending,&h->logger, RASTA_ROLE_CLIENT);
+    redundancy_mux_set_config_id(&h->mux, id);
 
     // initialize seq nums and timestamps
-    new_con.sn_t = get_initial_seq_num(&handle->config);
+    new_con.sn_t = get_initial_seq_num(&h->config);
     //new_con.sn_t = 66;
-    logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA CONNECT", "Using %lu as initial sequence number", new_con.sn_t);
+    logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA CONNECT", "Using %lu as initial sequence number", new_con.sn_t);
 
     new_con.cs_t = 0;
     new_con.cts_r = cur_timestamp();
-    new_con.t_i = handle->config.values.sending.t_max;
+    new_con.t_i = h->config.values.sending.t_max;
 
     unsigned char * version = (unsigned char*)RASTA_VERSION;
 
-    logger_log(&handle->logger, LOG_LEVEL_DEBUG, "RaSTA CONNECT", "Local version is %s", version);
+    logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA CONNECT", "Local version is %s", version);
 
 
     // send ConReq
     struct RastaPacket conreq = createConnectionRequest(new_con.remote_id, new_con.my_id,
                                                         new_con.sn_t, cur_timestamp(),
-                                                        handle->config.values.sending.send_max,
-                                                        version, &handle->hashing_context);
+                                                        h->config.values.sending.send_max,
+                                                        version, &h->hashing_context);
 
-    redundancy_mux_send(&handle->mux,conreq);
+    redundancy_mux_send(&h->mux,conreq);
 
     // increase sequence number
     new_con.sn_t++;
@@ -1500,14 +1510,22 @@ void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPDat
     new_con.current_state = RASTA_CONNECTION_START;
 
 
-    unsigned int con_id = (unsigned int)rastalist_addConnection(&handle->connections,new_con);
+    for (unsigned int i = 0; i < h->connections.size; i++) {
+        remove_timed_event(&h->connections.data[i].send_heartbeat_event);
+        remove_timed_event(&h->connections.data[i].timeout_event);
+    }
+    unsigned int con_id = (unsigned int)rastalist_addConnection(&h->connections,new_con);
+    for (unsigned int i = 0; i < h->connections.size; i++) {
+        add_timed_event(&h->events, &h->connections.data[i].send_heartbeat_event);
+        add_timed_event(&h->events, &h->connections.data[i].timeout_event);
+    }
 
-    struct rasta_connection *con = rastalist_getConnection(&handle->connections,con_id);
+    struct rasta_connection *con = rastalist_getConnection(&h->connections,con_id);
 
     freeRastaByteArray(&conreq.data);
 
     // fire connection state changed event
-    fire_on_connection_state_change(sr_create_notification_result(handle,con));
+    fire_on_connection_state_change(sr_create_notification_result(h,con));
 }
 
 void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessageData app_messages){

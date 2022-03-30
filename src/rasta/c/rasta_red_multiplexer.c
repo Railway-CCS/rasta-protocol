@@ -253,7 +253,7 @@ void receive_packet(redundancy_mux * mux, int channel_id){
     new_channel.associated_id = receivedPacket.data.sender_id;
     // add transport channel to redundancy channel
     new_channel.connected_channels[0].ip_address = connected_channel.ip_address;
-    new_channel.connected_channels[0].port= connected_channel.port;
+    new_channel.connected_channels[0].port = connected_channel.port;
     new_channel.connected_channel_count++;
 
     new_channel.is_open = 1;
@@ -274,9 +274,9 @@ void receive_packet(redundancy_mux * mux, int channel_id){
     rfree(buffer);
 }
 
-char channel_receive_event(void * carry_data) {
-    struct receive_event_data * data = carry_data;
-    struct rasta_handle * h = data->h;
+char channel_receive_event(void* carry_data) {
+    struct receive_event_data* data = carry_data;
+    struct rasta_handle* h = data->h;
     unsigned int mux_channel_count = h->mux.channel_count;
 
     for (size_t i = 0; i < mux_channel_count; ++i) {
@@ -284,7 +284,6 @@ char channel_receive_event(void * carry_data) {
         int n_diagnose = h->mux.config.redundancy.n_diagnose;
 
         unsigned long channel_diag_start_time = current.connected_channels[data->channel_index].diagnostics_data.start_time;
-
 
         if (current_ts() - channel_diag_start_time >= (unsigned long)n_diagnose){
             // increase n_missed by amount of messages that are not received
