@@ -16,9 +16,6 @@ void rastalist_change_size(struct RastaList *list, unsigned int size) {
     list->actual_size = size;
 }
 
-
-
-
 int rastalist_addConnection(struct RastaList *list, struct rasta_connection item) {
     if (list->size >= list->actual_size) {
         rastalist_change_size(list, list->actual_size * 2);
@@ -29,11 +26,9 @@ int rastalist_addConnection(struct RastaList *list, struct rasta_connection item
     unsigned int return_size = list->size -1;
 
     return return_size;
-
 }
 
 void rastalist_remove(struct RastaList *list, unsigned int id) {
-
     if (id >= list->size){
         return;
     }
