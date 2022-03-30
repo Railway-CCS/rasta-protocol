@@ -160,9 +160,6 @@ void fire_on_handshake_complete(struct rasta_notification_result result){
 
 void on_heartbeat_timeout_call(struct rasta_notification_result * result){
     (*result->handle->notifications.on_heartbeat_timeout)(result);
-
-    // notification handler completed, decrease amount of running threads
-    result->handle->running_notifications = result->handle->running_notifications -1;
 }
 
 void fire_on_heartbeat_timeout(struct rasta_notification_result result){
@@ -171,9 +168,6 @@ void fire_on_heartbeat_timeout(struct rasta_notification_result result){
         // notification not set, do nothing
         return;
     }
-
-    // a thread will be started, increase amount of running notification threads
-    result.handle->running_notifications = result.handle->running_notifications + 1;
 
     on_heartbeat_timeout_call(&result);
 }
