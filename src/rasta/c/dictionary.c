@@ -2,9 +2,9 @@
 // Created by tobia on 18.12.2017.
 //
 #include <ctype.h>
+#include <string.h>
 #include "rmemory.h"
 #include "dictionary.h"
-#include "string.h"
 
 /**
  * makes the string uppercase

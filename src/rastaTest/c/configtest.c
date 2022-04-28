@@ -6,7 +6,7 @@
 #include "../headers/configtest.h"
 #include <CUnit/Basic.h>
 #include "config.h"
-#include "string.h"
+#include <string.h>
 
 void check_std_config() {
     //remove old file
