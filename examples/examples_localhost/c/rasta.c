@@ -9,9 +9,9 @@
 #include "rasta_new.h"
 #include "rmemory.h"
 
-#define CONFIG_PATH_S "../../../rasta_server_local.cfg"
-#define CONFIG_PATH_C1 "../../../rasta_client1_local.cfg"
-#define CONFIG_PATH_C2 "../../../rasta_client2_local.cfg"
+#define CONFIG_PATH_S "rasta_server_local.cfg"
+#define CONFIG_PATH_C1 "rasta_client1_local.cfg"
+#define CONFIG_PATH_C2 "rasta_client2_local.cfg"
 
 #define ID_R 0x61
 #define ID_S1 0x62
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]){
         h.notifications.on_handshake_complete = onHandshakeCompleted;
         h.notifications.on_heartbeat_timeout = onTimeout;
         enable_fd_event(&fd_events[0]);
-        sr_begin(&h, fd_events, 1);
+        sr_begin(&h, fd_events, 1, 1);
     }
     else if (strcmp(argv[1], "s1") == 0) {
         printf("->   S1 (ID = 0x%lX)\n", (unsigned long)ID_S1);
@@ -247,7 +247,7 @@ int main(int argc, char *argv[]){
         printf("->   Press Enter to connect\n");
         disable_fd_event(&fd_events[0]);
         enable_fd_event(&fd_events[1]);
-        sr_begin(&h, fd_events, 2);
+        sr_begin(&h, fd_events, 2, 0);
     }
     else if (strcmp(argv[1], "s2") == 0) {
         printf("->   S2 (ID = 0x%lX)\n", (unsigned long)ID_S2);
@@ -259,7 +259,7 @@ int main(int argc, char *argv[]){
         printf("->   Press Enter to connect\n");
         disable_fd_event(&fd_events[0]);
         enable_fd_event(&fd_events[1]);
-        sr_begin(&h, fd_events, 2);
+        sr_begin(&h, fd_events, 2, 0);
     }
 }
 

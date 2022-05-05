@@ -125,7 +125,9 @@ void start_event_loop(timed_event* timed_events, int timed_events_len, fd_event*
             }
         }
         // fire event and exit in case it returns something else than 0
-        if (timed_events[next_event].callback(timed_events[next_event].carry_data)) break;
+        if (timed_events[next_event].callback(timed_events[next_event].carry_data)) {
+            break;
+        }
         // update timed_event::__last_call
         timed_events[next_event].__last_call = cur_time + time_to_wait;
     }

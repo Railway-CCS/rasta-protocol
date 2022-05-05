@@ -151,7 +151,7 @@ void sr_disconnect(struct rasta_handle *h, unsigned long remote_id);
  */
 void sr_cleanup(struct rasta_handle *h);
 
-void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len);
+void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len, int wait_for_handshake);
 
 #ifdef __cplusplus
 }

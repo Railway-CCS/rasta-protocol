@@ -330,38 +330,11 @@ int channel_receive_event(void * carry_data) {
 }
 
 int channel_timeout_event(void * carry_data) {
-    struct timeout_event_data * data = carry_data;
-    redundancy_mux* mx = data->mux;
-    if (!mx->is_open) return 0;
+    (void)carry_data;
+    // TODO: I don't know what exactly this should handle.
 
-    unsigned int mux_channel_count = mx->channel_count;
-
-    for (unsigned int i = 0; i < mux_channel_count; ++i) {
-        data->event->interval = 100000;
-        rasta_redundancy_channel current_channel = mx->connected_channels[i];
-
-        // get channel information
-        unsigned int channel_defer_q_count = current_channel.defer_q.count;
-        unsigned int channel_t_seq = current_channel.configuration_parameters.t_seq;
-        unsigned long channel_oldest_ts = current_channel.defer_q.elements[0].received_timestamp;
-
-        if(channel_defer_q_count == 0){
-            // skip if queue is empty
-            continue;
-        }
-        unsigned long current_time = current_ts();
-
-        // defer queue is sorted, so the first element is always the oldest
-        if ((current_time - channel_oldest_ts) > channel_t_seq){
-            // timeout, send to next layer
-
-            logger_log(&mx->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux timeout thread", "timout detected for connection %d. calling f_deferTmo", i);
-            rasta_red_f_deferTmo(&current_channel);
-        } else{
-            data->event->interval = 1000 * (channel_t_seq - (current_time - channel_oldest_ts));
-        }
-    }
-    return 0;
+    //  Right now, we are (mis-) using this only to timeout waiting for the handshake response.
+    return 1;
 }
 
 /**
@@ -370,14 +343,14 @@ int channel_timeout_event(void * carry_data) {
  * @param t_data the carry data for the first event
  * @param mux the redundancy multiplexer that will contain the channels
  */
-void init_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux) {
-    int open = mux->is_open;
+void init_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux, int open) {
     t_data->mux = mux;
     t_data->event = event;
     event->callback = channel_timeout_event;
     event->carry_data = t_data;
     event->enabled = !open;
-    event->interval = 100000;
+    // Where does this constant come from?
+    event->interval = 2 * 1000000000lu;
 }
 
 /* ----------------------------*/
@@ -390,7 +363,6 @@ redundancy_mux redundancy_mux_init_(struct logger_t logger, struct RastaConfigIn
     mux.port_count = config.redundancy.connections.count;
     mux.config = config;
 
-    mux.is_open = 0;
     mux.notifications_running = 0;
 
     logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "init memory for %d listen ports", mux.port_count);
@@ -456,7 +428,6 @@ redundancy_mux redundancy_mux_init(struct logger_t logger, uint16_t * listen_por
     mux.port_count = port_count;
     mux.config = config;
 
-    mux.is_open = 0;
     mux.notifications_running = 0;
 
     logger_log(&mux.logger, LOG_LEVEL_DEBUG, "RaSTA RedMux init", "init memory for %d listen ports", port_count);
@@ -506,9 +477,6 @@ redundancy_mux redundancy_mux_init(struct logger_t logger, uint16_t * listen_por
 }
 
 void redundancy_mux_close(redundancy_mux * mux){
-    // set flag to 0, will cause the threads to stop and cleanup before exiting
-    mux->is_open = 0;
-
     // close the sockets of the transport channels
     for (unsigned int i = 0; i < mux->port_count; ++i) {
         logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux close", "closing udp socket %d/%d", i+1, mux->port_count);
