@@ -70,8 +70,15 @@ int main(int argc, char *argv[]){
     struct RastaIPData toServer[2];
 
 #ifdef EXAMPLE_IP_OVERRIDE
-    strcpy(toServer[0].ip, getenv("SERVER_CH1"));
-    strcpy(toServer[1].ip, getenv("SERVER_CH2"));
+    char *server1IP = getenv("SERVER_CH1");
+    char *server2IP = getenv("SERVER_CH2");
+    if (server1IP == NULL || server2IP == NULL)
+    {
+        printf("Error: no SERVER_CH1 or SERVER_CH2 environment variable specified\n");
+        return 1;
+    }
+    strcpy(toServer[0].ip, server1IP);
+    strcpy(toServer[1].ip, server2IP);
 #else
     strcpy(toServer[0].ip, "10.0.0.100");
     strcpy(toServer[1].ip, "10.0.0.101");
@@ -111,4 +118,6 @@ int main(int argc, char *argv[]){
 
     scils_cleanup(scils);
     sr_cleanup(&h);
+
+    return 0;
 }
