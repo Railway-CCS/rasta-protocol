@@ -28,7 +28,6 @@ add_executable(rastaTest
     rastaTest/c/rastamd4Test.c
     rastaTest/c/rastamoduleTest.c
     rastaTest/c/registerTests.c
-    rastaTest/c/registerTests.c
     rastaTest/c/siphash24test.c)
 target_include_directories(rastaTest PRIVATE rastaTest/headers)
 target_link_libraries(rastaTest rasta PkgConfig::CUnit)

@@ -89,9 +89,6 @@ void deferqueue_remove(struct defer_queue * queue, unsigned long seq_nr){
         queue->elements[index] = queue->elements[queue->count-1];
     }
 
-    // free last element
-    freeRastaByteArray(&queue->elements[queue->count -1].packet.data.data);
-
     // decrease counter
     queue->count = queue->count -1;
 
