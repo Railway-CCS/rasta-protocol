@@ -1,12 +1,13 @@
 //
 // Created by Johannes on 29.11.2017.
 //
-
-#include <rastamd4.h>
-#include <CUnit/Basic.h>
-#include <time.h>
 #include "../headers/rastamd4Test.h"
+#include <rastamd4.h>
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <CUnit/Basic.h>
 #include "rmemory.h"
 
 void testMD4function(){
