@@ -195,7 +195,6 @@ if(BUILD_TESTING)
         src/rastaTest/headers/rastalisttest.h
         src/rastaTest/headers/rastamd4Test.h
         src/rastaTest/headers/rastamoduleTest.h
-        src/rastaTest/headers/registerTests.h
         src/rastaTest/headers/siphash24test.h
         src/rastaTest/c/blake2test.c
         src/rastaTest/c/configtest.c
@@ -209,15 +208,13 @@ if(BUILD_TESTING)
         src/rastaTest/c/rastamoduleTest.c
         src/rastaTest/c/registerTests.c
         src/rastaTest/c/siphash24test.c)
-    target_include_directories(rastaTest PRIVATE src/rastaTest/headers assets/include_gradle/)
+    target_include_directories(rastaTest PRIVATE src/rastaTest/headers)
     target_link_libraries(rastaTest rasta PkgConfig::CUnit)
-    target_compile_definitions(rastaTest PRIVATE WITH_CMAKE)
 
     add_test(NAME test_rastaTest
              COMMAND rastaTest)
 
     add_executable(sciTest
-        src/sciTest/headers/registerTests.h
         src/sciTest/headers/scilsTests.h
         src/sciTest/headers/scipTests.h
         src/sciTest/headers/sciTests.h
@@ -225,9 +222,8 @@ if(BUILD_TESTING)
         src/sciTest/c/scilsTests.c
         src/sciTest/c/scipTests.c
         src/sciTest/c/sciTests.c)
-    target_include_directories(sciTest PRIVATE src/sciTest/headers assets/include_gradle/)
+    target_include_directories(sciTest PRIVATE src/sciTest/headers)
     target_link_libraries(sciTest rasta PkgConfig::CUnit)
-    target_compile_definitions(sciTest PRIVATE WITH_CMAKE)
 
     add_test(NAME test_sciTest
              COMMAND sciTest)
