@@ -9,6 +9,7 @@ SET(USE_OPENSSL false CACHE BOOL "Use OpenSSL MD4 implementation")
 
 option(BUILD_DOCUMENTATION "Generate documentation" OFF)
 option(BUILD_LOCAL_EXAMPLES "Build the RaSTA/SCI examples the run on localhost" ON)
+option(BUILD_TESTING "Build RaSTA tests" ON)
 option(BUILD_REMOTE_EXAMPLES "Build the RaSTA/SCI examples that communicate in a network" ON)
 option(EXAMPLE_IP_OVERRIDE "Use IPs from environment variables in RaSTA/SCI examples" OFF)
 option(ENABLE_CODE_COVERAGE "Provide command to generate code coverage report" OFF)
