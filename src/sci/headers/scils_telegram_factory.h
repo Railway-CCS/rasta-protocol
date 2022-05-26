@@ -12,22 +12,22 @@ extern "C" {  // only need to export C interface if
 /**
  * Message type of a show signal aspect telegram.
  */
-#define SCILS_MESSAGE_TYPE_SHOW_SIGNAL_ASPECT 0x0100
+#define SCILS_MESSAGE_TYPE_SHOW_SIGNAL_ASPECT 0x0001
 
 /**
  * Message type of a change brightness telegram.
  */
-#define SCILS_MESSAGE_TYPE_CHANGE_BRIGHTNESS 0x0200
+#define SCILS_MESSAGE_TYPE_CHANGE_BRIGHTNESS 0x0002
 
 /**
  * Message type of a signal aspect status telegram.
  */
-#define SCILS_MESSAGE_TYPE_SIGNAL_ASPECT_STATUS 0x0300
+#define SCILS_MESSAGE_TYPE_SIGNAL_ASPECT_STATUS 0x0003
 
 /**
  * Message type of a brightness status telegram
  */
-#define SCILS_MESSAGE_TYPE_SIGNAL_BRIGHTNESS_STATUS 0x0400
+#define SCILS_MESSAGE_TYPE_SIGNAL_BRIGHTNESS_STATUS 0x0004
 
 /**
  * Enumeration with allowed values for main concept parameter
