@@ -2,6 +2,7 @@
 #include <sci_telegram_factory.h>
 #include <rmemory.h>
 #include <sci.h>
+#include <string.h>
 
 scils_signal_aspect * scils_signal_aspect_defaults(){
     scils_signal_aspect * signal_aspect = rmalloc(sizeof(scils_signal_aspect));
@@ -56,14 +57,18 @@ sci_telegram * scils_create_signal_aspect_status(char * sender, char * receiver,
     sci_telegram * telegram = sci_create_base_telegram(SCI_PROTOCOL_LS, sender, receiver,
                                                        SCILS_MESSAGE_TYPE_SIGNAL_ASPECT_STATUS);
 
-    telegram->payload.used_bytes = 7;
+    telegram->payload.used_bytes = 18;
     telegram->payload.data[0] = signal_aspect.main;
     telegram->payload.data[1] = signal_aspect.additional;
     telegram->payload.data[2] = signal_aspect.zs3;
     telegram->payload.data[3] = signal_aspect.zs3v;
     telegram->payload.data[4] = signal_aspect.zs2;
     telegram->payload.data[5] = signal_aspect.zs2v;
-    telegram->payload.data[6] = signal_aspect.dark_switching;
+    telegram->payload.data[6] = signal_aspect.deprecation_information;
+    // route information not applicable
+    telegram->payload.data[7] = signal_aspect.route_information;
+    telegram->payload.data[8] = signal_aspect.dark_switching;
+    memcpy(&telegram->payload.data[9],signal_aspect.nationally_specified_information,9);
 
     return telegram;
 }
@@ -111,7 +116,10 @@ sci_parse_result scils_parse_signal_aspect_status_payload(sci_telegram * telegra
     signal_aspect->zs3v= (scils_zs3)telegram->payload.data[3];
     signal_aspect->zs2= (scils_zs2)telegram->payload.data[4];
     signal_aspect->zs2v= (scils_zs2)telegram->payload.data[5];
-    signal_aspect->dark_switching = (scils_dark_switching)telegram->payload.data[6];
+    signal_aspect->deprecation_information = (scils_deprecation_information)telegram->payload.data[6];
+    signal_aspect->route_information = (scils_route_information)telegram->payload.data[7];
+    signal_aspect->dark_switching = (scils_dark_switching)telegram->payload.data[8];
+    memcpy(signal_aspect->nationally_specified_information,&telegram->payload.data[9],9);
 
     return SCI_PARSE_SUCCESS;
 }
