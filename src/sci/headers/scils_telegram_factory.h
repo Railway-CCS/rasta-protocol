@@ -156,12 +156,6 @@ typedef enum {
     SCILS_BRIGHTNESS_NIGHT = 0x02,
     SCILS_BRIGHTNESS_UNDEFINED = 0xFF // Only allowed in telegram: Message Configured Luminosity
 } scils_brightness;
-/**
- * Enumeration with supported values for route information parameter
- */
-typedef enum{
-    SCILS_ROUTE_NOT_APPLICABLE=0xFF
-} scils_route_information;
 
 /**
  * Representation of a signal aspect configuration.
@@ -176,7 +170,6 @@ typedef struct {
     scils_deprecation_information deprecation_information;
     scils_driveway_information upstream_driveway_information;
     scils_driveway_information downstream_driveway_information;
-    scils_route_information route_information;
     scils_dark_switching dark_switching;
     uint8_t nationally_specified_information[9];
 

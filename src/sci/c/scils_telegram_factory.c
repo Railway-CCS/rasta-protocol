@@ -66,7 +66,7 @@ sci_telegram * scils_create_signal_aspect_status(char * sender, char * receiver,
     telegram->payload.data[5] = signal_aspect.zs2v;
     telegram->payload.data[6] = signal_aspect.deprecation_information;
     // route information not applicable
-    telegram->payload.data[7] = signal_aspect.route_information;
+    telegram->payload.data[7] = (signal_aspect.downstream_driveway_information << 4) + signal_aspect.upstream_driveway_information;
     telegram->payload.data[8] = signal_aspect.dark_switching;
     memcpy(&telegram->payload.data[9],signal_aspect.nationally_specified_information,9);
 
@@ -102,6 +102,7 @@ sci_parse_result scils_parse_show_signal_aspect_payload(sci_telegram * telegram,
 
     signal_aspect->dark_switching = (scils_dark_switching)telegram->payload.data[8];
 
+    memcpy(signal_aspect->nationally_specified_information,&telegram->payload.data[9],9);
     return SCI_PARSE_SUCCESS;
 }
 
@@ -117,7 +118,11 @@ sci_parse_result scils_parse_signal_aspect_status_payload(sci_telegram * telegra
     signal_aspect->zs2= (scils_zs2)telegram->payload.data[4];
     signal_aspect->zs2v= (scils_zs2)telegram->payload.data[5];
     signal_aspect->deprecation_information = (scils_deprecation_information)telegram->payload.data[6];
-    signal_aspect->route_information = (scils_route_information)telegram->payload.data[7];
+
+    unsigned char driveway = telegram->payload.data[7];
+    signal_aspect->upstream_driveway_information = (scils_driveway_information)(unsigned char)((driveway & 0x0F));
+    signal_aspect->downstream_driveway_information = (scils_driveway_information)(unsigned char)((driveway & 0xF0) >> 4);
+
     signal_aspect->dark_switching = (scils_dark_switching)telegram->payload.data[8];
     memcpy(signal_aspect->nationally_specified_information,&telegram->payload.data[9],9);
 
