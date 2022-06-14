@@ -178,57 +178,6 @@ if(BUILD_DOCUMENTATION)
     endif(DOXYGEN_FOUND)
 endif(BUILD_DOCUMENTATION)
 
-if(BUILD_TESTING)
-    include(FindPkgConfig)
-    if(PKG_CONFIG_FOUND)
-        pkg_check_modules(CUnit IMPORTED_TARGET cunit)
-    endif(PKG_CONFIG_FOUND)
-
-    add_executable(rastaTest
-        src/rastaTest/headers/blake2test.h
-        src/rastaTest/headers/configtest.h
-        src/rastaTest/headers/dictionarytest.h
-        src/rastaTest/headers/fifotest.h
-        src/rastaTest/headers/rastacrcTest.h
-        src/rastaTest/headers/rastadeferqueueTest.h
-        src/rastaTest/headers/rastafactoryTest.h
-        src/rastaTest/headers/rastalisttest.h
-        src/rastaTest/headers/rastamd4Test.h
-        src/rastaTest/headers/rastamoduleTest.h
-        src/rastaTest/headers/siphash24test.h
-        src/rastaTest/c/blake2test.c
-        src/rastaTest/c/configtest.c
-        src/rastaTest/c/dictionarytest.c
-        src/rastaTest/c/fifotest.c
-        src/rastaTest/c/rastacrcTest.c
-        src/rastaTest/c/rastadeferqueueTest.c
-        src/rastaTest/c/rastafactoryTest.c
-        src/rastaTest/c/rastalisttest.c
-        src/rastaTest/c/rastamd4Test.c
-        src/rastaTest/c/rastamoduleTest.c
-        src/rastaTest/c/registerTests.c
-        src/rastaTest/c/siphash24test.c)
-    target_include_directories(rastaTest PRIVATE src/rastaTest/headers)
-    target_link_libraries(rastaTest rasta PkgConfig::CUnit)
-
-    add_test(NAME test_rastaTest
-             COMMAND rastaTest)
-
-    add_executable(sciTest
-        src/sciTest/headers/scilsTests.h
-        src/sciTest/headers/scipTests.h
-        src/sciTest/headers/sciTests.h
-        src/sciTest/c/registerTests.c
-        src/sciTest/c/scilsTests.c
-        src/sciTest/c/scipTests.c
-        src/sciTest/c/sciTests.c)
-    target_include_directories(sciTest PRIVATE src/sciTest/headers)
-    target_link_libraries(sciTest rasta PkgConfig::CUnit)
-
-    add_test(NAME test_sciTest
-             COMMAND sciTest)
-endif(BUILD_TESTING)
-
 if(BUILD_LOCAL_EXAMPLES)
 	# scip_example on localhost
 	add_executable(scip_example_local
@@ -279,3 +228,6 @@ if(BUILD_REMOTE_EXAMPLES)
 	endif(EXAMPLE_IP_OVERRIDE)
 endif(BUILD_REMOTE_EXAMPLES)
 
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif(BUILD_TESTING)
