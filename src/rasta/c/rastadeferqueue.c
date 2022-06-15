@@ -9,7 +9,7 @@
  * @param seq_nr the sequence number to be located
  * @return -1 if there is no element with the specified @p seq_nr, index of the element otherwise
  */
-int find_index(struct defer_queue * queue, unsigned long seq_nr){
+int find_index(struct defer_queue* queue, unsigned long seq_nr){
     unsigned int index = 0;
 
     // naive implementation of search. performance shouldn't be an issue as the amount of messages in the queue is small

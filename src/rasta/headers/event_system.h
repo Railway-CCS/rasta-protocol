@@ -38,15 +38,19 @@ typedef struct fd_event {
     char enabled;
 } fd_event;
 
+struct timed_event_linked_list_s {
+    timed_event* first;
+    timed_event* last;
+};
+
+struct fd_event_linked_list_s {
+    fd_event* first;
+    fd_event* last;
+};
+
 typedef struct event_system {
-    struct timed_event_linked_list_s {
-        timed_event* first;
-        timed_event* last;
-    } timed_events;
-    struct fd_event_linked_list_s {
-        fd_event* first;
-        fd_event* last;
-    } fd_events;
+    struct timed_event_linked_list_s timed_events;
+    struct fd_event_linked_list_s fd_events;
 } event_system;
 
 /**
@@ -55,7 +59,7 @@ typedef struct event_system {
  * @param ev_sys contains all the events the loop should handel.
  * Can be modified from the calling thread while running.
  */
-void start_event_loop(event_system* ev_sys);
+void event_system_start(event_system* ev_sys);
 
 /**
  * reschedules the event to the current time + the event interval

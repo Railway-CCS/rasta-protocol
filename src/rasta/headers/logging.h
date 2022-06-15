@@ -16,6 +16,7 @@ extern "C" {  // only need to export C interface if
 
 #include <mqueue.h>
 #include "fifo.h"
+#include <stdio.h>
 
 #define LOG_FORMAT "[%s][%s][%s] %s\n"
 
@@ -143,7 +144,7 @@ void logger_set_log_file(struct logger_t* logger, char * path);
  * @param format the message which should be logged. can contain formatting information like %s, %d, ...
  * @param ... the format parameters
  */
-void logger_log(struct logger_t * logger, log_level level, char* location ,char* format, ...);
+void logger_log(struct logger_t * logger, log_level level, char* location ,char* format, ...) __attribute__ ((format (printf, 4, 5)));
 
 /**
  * logs a message of a specified condition is true (1)
@@ -154,7 +155,7 @@ void logger_log(struct logger_t * logger, log_level level, char* location ,char*
  * @param format the message which should be logged. can contain formatting information like %s, %d, ...
  * @param ... the format parameters
  */
-void logger_log_if(struct logger_t * logger, int cond, log_level level, char * location, char * format, ...);
+void logger_log_if(struct logger_t * logger, int cond, log_level level, char * location, char * format, ...)  __attribute__ ((format (printf, 5, 6)));
 
 /**
  * stops the write thread and frees resources of the logger

@@ -423,27 +423,6 @@ struct rasta_receive_handle {
 
 };
 
-typedef struct rasta_connection rasta_lib_connection_t[1];
-
-struct user_handles {
-    /**
-     * Allocate the memory neccessary for the connection list
-     * and return it. Alternativly return NULL to refuse the connection.
-     */
-    void* (*on_connection_request)(rasta_lib_connection_t);
-
-    /**
-     * Whenever a connection disconnects, this handler is called to free the memory
-     * allocated by user_handles::on_connection_request.
-     */
-    void (*on_disconnect)(void* occupied_memory);
-
-    /**
-     * This handler is called in case RaSTA cleanup is called.
-     */
-    void (*on_rasta_cleanup)();
-};
-
 struct rasta_handle {
     /**
     * the receiving data
@@ -511,7 +490,7 @@ struct rasta_handle {
     /**
      * the user specified configurations for RaSTA
      */
-    struct user_handles* user_handles;
+    struct user_callbacks* user_handles;
 };
 /**
  * creates the container for all notification events

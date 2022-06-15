@@ -67,7 +67,7 @@ void deliverDeferQueue(rasta_redundancy_channel * channel){
 
     // check if message with seq_pdu == seq_rx in defer queue
     while (deferqueue_contains(&channel->defer_q, channel->seq_rx)){
-        logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red deliver deferq", "deferq contains seq_pdu=%d",
+        logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red deliver deferq", "deferq contains seq_pdu=%lu",
                    channel->seq_rx);
 
         // forward to next layer by pushing into receive FIFO
@@ -94,15 +94,15 @@ void deliverDeferQueue(rasta_redundancy_channel * channel){
         // increase seq_rx
         channel->seq_rx = channel->seq_rx +1;
     }
-    logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red deliver deferq", "deferq doesn't contain seq_pdu=%d",
+    logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red deliver deferq", "deferq doesn't contain seq_pdu=%lu",
                channel->seq_rx);
 }
 
 void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedundancyPacket packet, int channel_id){
-    logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel %d: ptr=%p", channel_id, channel);
+    logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel %d: ptr=%p", channel_id, (void*) channel);
 
     if(!packet.checksum_correct){
-        logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel 0: Packet checksum incorrect", channel_id);
+        logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel 0: Packet checksum incorrect on channel %d", channel_id);
 
         // checksum incorrect, exit function
         return;
@@ -148,7 +148,8 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
         channel->seq_rx++;
         logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: correct seq. nr. delivering to next layer",
                    channel_id);
-        logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: seq_pdu=%lu, seq_rx=%lu", channel_id, packet.sequence_number, channel->seq_rx -1);
+        logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: seq_pdu=%lu, seq_rx=%lu",
+            channel_id, (long unsigned int) packet.sequence_number, channel->seq_rx - 1);
         // received packet as first transport channel -> add with ts to diagnostics buffer
         deferqueue_add(&channel->diagnostics_packet_buffer, packet, current_ts());
 

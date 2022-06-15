@@ -154,13 +154,10 @@ void fire_on_handshake_complete(struct rasta_notification_result result){
     on_handshake_complete_call(&result);
 }
 
-void on_heartbeat_timeout_call(struct rasta_notification_result * container){
-    struct rasta_notification_result * result = (struct rasta_notification_result * )container;
+void on_heartbeat_timeout_call(struct rasta_notification_result* container){
+    struct rasta_notification_result * result = (struct rasta_notification_result*)container;
 
     (*result->handle->notifications.on_heartbeat_timeout)(result);
-
-    //free container
-    rfree(container);
 }
 
 void fire_on_heartbeat_timeout(struct rasta_notification_result result){
@@ -170,9 +167,6 @@ void fire_on_heartbeat_timeout(struct rasta_notification_result result){
         return;
     }
 
-    //create container
-    struct rasta_notification_result* container = rmalloc(sizeof(struct rasta_notification_result));
-    *container = result;
     on_heartbeat_timeout_call(&result);
 }
 

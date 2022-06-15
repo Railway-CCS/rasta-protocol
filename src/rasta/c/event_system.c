@@ -120,7 +120,7 @@ uint64_t calc_next_timed_event(struct timed_event_linked_list_s* timed_events, t
  * @param ev_sys contains all the events the loop should handel.
  * Can be modified from the calling thread while running.
  */
-void start_event_loop(event_system* ev_sys) {
+void event_system_start(event_system* ev_sys) {
     uint64_t cur_time = get_nanotime();
     for (timed_event* current = ev_sys->timed_events.first; current; current = current->next) {
         current->last_call = cur_time;
@@ -202,14 +202,16 @@ void add_timed_event(event_system* ev_sys, timed_event* event) {
     // simple linked list add
     if (ev_sys->timed_events.last) {
         event->prev = ev_sys->timed_events.last;
+        event->next = NULL;
         ev_sys->timed_events.last->next = event;
+        ev_sys->timed_events.last = event;
     }
     else {
         ev_sys->timed_events.first = event;
         ev_sys->timed_events.last = event;
+        event->next = NULL;
+        event->prev = NULL;
     }
-    event->prev = ev_sys->timed_events.last;
-    event->next = NULL;
 }
 
 /**
@@ -236,14 +238,16 @@ void add_fd_event(event_system* ev_sys, fd_event* event, int options) {
     // simple linked list add
     if (ev_sys->fd_events.last) {
         event->prev = ev_sys->fd_events.last;
+        event->next = NULL;
         ev_sys->fd_events.last->next = event;
+        ev_sys->fd_events.last = event;
     }
     else {
         ev_sys->fd_events.first = event;
         ev_sys->fd_events.last = event;
+        event->next = NULL;
+        event->prev = NULL;
     }
-    event->prev = ev_sys->fd_events.last;
-    event->next = NULL;
 
     event->options = options;
 }

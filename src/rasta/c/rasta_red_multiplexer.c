@@ -177,7 +177,7 @@ void receive_packet(redundancy_mux * mux, int channel_id){
     // wait for pdu
     size_t len = udp_receive(fd, buffer, MAX_DEFER_QUEUE_MSG_SIZE, &sender);
     logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux receive", "channel %d received data on upd", channel_id);
-    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux receive", "channel %d received data len = %d", channel_id, len);
+    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux receive", "channel %d received data len = %lu", channel_id, len);
 
     struct RastaByteArray incomingData;
     incomingData.length = (unsigned int)len;
@@ -250,7 +250,8 @@ void receive_packet(redundancy_mux * mux, int channel_id){
     }
 
     // no associated channel found -> received message from new partner
-    logger_log(&mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux receive", "received pdu from unknown entity with id=0x%lX", receivedPacket.data.sender_id);
+    logger_log(&mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux receive", "received pdu from unknown entity with id=0x%lX",
+        (long unsigned int) receivedPacket.data.sender_id);
     rasta_redundancy_channel new_channel = rasta_red_init(mux->logger, mux->config, mux->port_count, receivedPacket.data.sender_id);
     new_channel.associated_id = receivedPacket.data.sender_id;
     // add transport channel to redundancy channel
@@ -286,7 +287,6 @@ int channel_receive_event(void * carry_data) {
         int n_diagnose = h->mux.config.redundancy.n_diagnose;
 
         unsigned long channel_diag_start_time = current.connected_channels[data->channel_index].diagnostics_data.start_time;
-
 
         if (current_ts() - channel_diag_start_time >= (unsigned long)n_diagnose){
             // increase n_missed by amount of messages that are not received
@@ -521,17 +521,19 @@ void redundancy_mux_set_config_id(redundancy_mux * mux, unsigned long id){
 }
 
 void redundancy_mux_send(redundancy_mux * mux, struct RastaPacket data){
-    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "sending a data packet to id 0x%lX", data.receiver_id);
+    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "sending a data packet to id 0x%lX",
+        (long unsigned int) data.receiver_id);
 
     // get the channel to the remote entity by the data's received_id
     rasta_redundancy_channel * receiver = redundancy_mux_get_channel(mux, data.receiver_id);
 
     if (receiver == NULL){
-        logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "redundancy channel with id=0x%lX unknown", data.receiver_id);
+        logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "redundancy channel with id=0x%lX unknown",
+            (long unsigned int) data.receiver_id);
         // not receiver found
         return;
     }
-    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "current seq_tx=%d", receiver->seq_tx);
+    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux send", "current seq_tx=%lu", receiver->seq_tx);
 
     // create packet to send and convert to byte array
     struct RastaRedundancyPacket packet = createRedundancyPacket(receiver->seq_tx, data, mux->config.redundancy.crc_type);
@@ -630,12 +632,12 @@ void redundancy_mux_add_channel(redundancy_mux * mux, unsigned long id, struct R
     mux->connected_channels[mux->channel_count] = channel;
     mux->channel_count++;
 
-    logger_log(&mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux add channel", "added new redundancy channel for ID=0x%X", id);
+    logger_log(&mux->logger, LOG_LEVEL_INFO, "RaSTA RedMux add channel", "added new redundancy channel for ID=0x%lX", id);
 }
 
 void redundancy_mux_remove_channel(redundancy_mux * mux, unsigned long channel_id){
     rasta_redundancy_channel * channel = redundancy_mux_get_channel(mux, channel_id);
-    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux remove channel", "removing channel with ID=0x%X", channel_id);
+    logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux remove channel", "removing channel with ID=0x%lX", channel_id);
 
     if (channel == NULL){
         // no channel with given id
@@ -649,12 +651,12 @@ void redundancy_mux_remove_channel(redundancy_mux * mux, unsigned long channel_i
         rasta_redundancy_channel c = mux->connected_channels[i];
 
         if (c.associated_id == channel_id){
-            logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux remove channel", "skipping channel with ID=0x%X", c.associated_id);
+            logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux remove channel", "skipping channel with ID=0x%lX", c.associated_id);
             // channel to remove, skip
             continue;
         }
 
-        logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux remove channel", "copy channel with ID=0x%X", c.associated_id);
+        logger_log(&mux->logger, LOG_LEVEL_DEBUG, "RaSTA RedMux remove channel", "copy channel with ID=0x%lX", c.associated_id);
         // otherwise copy to new channel array
         new_channels[newIndex] = c;
         newIndex++;

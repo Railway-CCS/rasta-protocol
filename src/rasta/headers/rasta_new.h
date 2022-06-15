@@ -132,11 +132,11 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
 rastaApplicationMessage sr_get_received_data(struct rasta_handle *h, struct rasta_connection * connection);
 
 /**
- * closes the connection to the given remote_id
+ * closes the connection to the connection
  * @param h
- * @param remote_id
+ * @param con
  */
-void sr_disconnect(struct rasta_handle *h, unsigned long remote_id);
+void sr_disconnect(struct rasta_handle *h, struct rasta_connection* con);
 
 /**
  * used to end all threads an free assigned ressources
