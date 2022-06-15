@@ -17,9 +17,11 @@ typedef int (*event_ptr)(void* h);
  */
 typedef struct timed_event {
     event_ptr callback;
-    uint64_t interval;
-    uint64_t __last_call;
     void* carry_data;
+    struct timed_event* prev;
+    struct timed_event* next;
+    uint64_t interval;
+    uint64_t last_call;
     char enabled;
 } timed_event;
 
@@ -29,19 +31,31 @@ typedef struct timed_event {
 typedef struct fd_event {
     event_ptr callback;
     void* carry_data;
+    struct fd_event* prev;
+    struct fd_event* next;
     int fd;
+    int options;
     char enabled;
 } fd_event;
+
+typedef struct event_system {
+    struct timed_event_linked_list_s {
+        timed_event* first;
+        timed_event* last;
+    } timed_events;
+    struct fd_event_linked_list_s {
+        fd_event* first;
+        fd_event* last;
+    } fd_events;
+} event_system;
 
 /**
  * starts an event loop with the given events
  * the events may not be removed while the loop is running, but can be modified
- * @param timed_events an array with the looping events to handle
- * @param timed_events_len the length of the timed_event array
- * @param fd_events an array with the events, that get called whenever the given fd gets readable
- * @param fd_events_len the length of the fd event array
+ * @param ev_sys contains all the events the loop should handel.
+ * Can be modified from the calling thread while running.
  */
-void start_event_loop(timed_event* timed_events, int timed_events_len, fd_event* fd_events, int fd_events_len);
+void start_event_loop(event_system* ev_sys);
 
 /**
  * reschedules the event to the current time + the event interval
@@ -73,6 +87,45 @@ void disable_timed_event(timed_event* event);
  * @param event the event to enable
  */
 void disable_fd_event(fd_event* event);
+
+/**
+ * Add a timed event to an event system. 
+ * A event can only be in one event system at a time. 
+ * (not thread safe)
+ * @param ev_sys the event will be added to this event system
+ * @param event the event to add
+ */
+void add_timed_event(event_system* ev_sys, timed_event* event);
+
+/**
+ * Removes a timed event from its event system. 
+ * (not thread safe)
+ * @param ev_sys the event will be added to this event system
+ * @param event the event to add
+ */
+void remove_timed_event(timed_event* event);
+
+#define EV_READABLE    (1 << 0)
+#define EV_WRITABLE    (1 << 1)
+#define EV_EXCEPTIONAL (1 << 2)
+
+/**
+ * Add a fd event to an event system. 
+ * A event can only be in one event system at a time. 
+ * (not thread safe)
+ * @param ev_sys the event will be added to this event system
+ * @param event the event to add
+ * @param options set how the event should be triggered. (EV_READABLE | EV_WRITABLE | EV_CHANGE)
+ */
+void add_fd_event(event_system* ev_sys, fd_event* event, int options);
+
+/**
+ * Removes a fd event from its event system. 
+ * (not thread safe)
+ * @param ev_sys the event will be added to this event system
+ * @param event the event to add
+ */
+void remove_fd_event(fd_event* event);
 
 #ifdef __cplusplus
 }

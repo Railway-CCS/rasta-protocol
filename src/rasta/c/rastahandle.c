@@ -191,7 +191,8 @@ void rasta_handle_manually_init(struct rasta_handle *h, struct RastaConfigInfo c
     h->notifications.on_redundancy_diagnostic_notification = NULL;
 
     // init the list
-    h->connections = rastalist_create(2);
+    h->first_con = NULL;
+    h->last_con = NULL;
 
     // init hashing context
     h->hashing_context.hash_length = h->config.values.sending.md4_type;
@@ -225,7 +226,6 @@ void rasta_handle_manually_init(struct rasta_handle *h, struct RastaConfigInfo c
     h->receive_handle->config = h->config.values.sending;
     h->receive_handle->info = h->config.values.general;
     h->receive_handle->handle = h;
-    h->receive_handle->connections = &h->connections;
     h->receive_handle->running = &h->recv_running;
     h->receive_handle->logger = &h->logger;
     h->receive_handle->mux = &h->mux;
@@ -235,7 +235,6 @@ void rasta_handle_manually_init(struct rasta_handle *h, struct RastaConfigInfo c
     h->send_handle->config = h->config.values.sending;
     h->send_handle->info = h->config.values.general;
     h->send_handle->handle = h;
-    h->send_handle->connections = &h->connections;
     h->send_handle->running = &h->send_running;
     h->send_handle->logger = &h->logger;
     h->send_handle->mux = &h->mux;
@@ -245,7 +244,6 @@ void rasta_handle_manually_init(struct rasta_handle *h, struct RastaConfigInfo c
     h->heartbeat_handle->config = h->config.values.sending;
     h->heartbeat_handle->info = h->config.values.general;
     h->heartbeat_handle->handle = h;
-    h->heartbeat_handle->connections = &h->connections;
     h->heartbeat_handle->running = &h->hb_running;
     h->heartbeat_handle->logger = &h->logger;
     h->heartbeat_handle->mux = &h->mux;
@@ -298,7 +296,8 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
 
 
     // init the list
-    h->connections = rastalist_create(2);
+    h->first_con = NULL;
+    h->last_con = NULL;
 
     // init hashing context
     h->hashing_context.hash_length = h->config.values.sending.md4_type;
@@ -332,7 +331,6 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
     h->receive_handle->config = h->config.values.sending;
     h->receive_handle->info = h->config.values.general;
     h->receive_handle->handle = h;
-    h->receive_handle->connections = &h->connections;
     h->receive_handle->running = &h->recv_running;
     h->receive_handle->logger = &h->logger;
     h->receive_handle->mux = &h->mux;
@@ -342,7 +340,6 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
     h->send_handle->config = h->config.values.sending;
     h->send_handle->info = h->config.values.general;
     h->send_handle->handle = h;
-    h->send_handle->connections = &h->connections;
     h->send_handle->running = &h->send_running;
     h->send_handle->logger = &h->logger;
     h->send_handle->mux = &h->mux;
@@ -352,7 +349,6 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
     h->heartbeat_handle->config = h->config.values.sending;
     h->heartbeat_handle->info = h->config.values.general;
     h->heartbeat_handle->handle = h;
-    h->heartbeat_handle->connections = &h->connections;
     h->heartbeat_handle->running = &h->hb_running;
     h->heartbeat_handle->logger = &h->logger;
     h->heartbeat_handle->mux = &h->mux;

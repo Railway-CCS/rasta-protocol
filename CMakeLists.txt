@@ -86,4 +86,3 @@ if(BUILD_TESTING)
     add_subdirectory(test)
 endif(BUILD_TESTING)
 
-add_subdirectory(examples)

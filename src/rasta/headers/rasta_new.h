@@ -81,16 +81,10 @@ typedef enum {
             RASTA_DISC_REASON_PROTOCOLERROR=8
 } rasta_disconnect_reason;
 
-
-
 typedef struct {
     unsigned long id;
     struct RastaByteArray appMessage;
 }rastaApplicationMessage;
-
-
-
-
 
 /**
  * initializes the rasta handle and starts all threads
@@ -151,7 +145,7 @@ void sr_disconnect(struct rasta_handle *h, unsigned long remote_id);
  */
 void sr_cleanup(struct rasta_handle *h);
 
-void sr_begin(struct rasta_handle * h, fd_event * extern_fd_events, int len, int wait_for_handshake);
+void sr_begin(struct rasta_handle * h, event_system* event_system, int wait_for_handshake);
 
 #ifdef __cplusplus
 }

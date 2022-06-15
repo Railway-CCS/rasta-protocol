@@ -343,7 +343,7 @@ int channel_timeout_event(void * carry_data) {
  * @param t_data the carry data for the first event
  * @param mux the redundancy multiplexer that will contain the channels
  */
-void init_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux, int open) {
+void init_channel_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux, int open) {
     t_data->mux = mux;
     t_data->event = event;
     event->callback = channel_timeout_event;

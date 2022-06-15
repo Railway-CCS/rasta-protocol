@@ -18,7 +18,7 @@ set(RASTA_HDRS
     rasta/headers/rastadeferqueue.h
     rasta/headers/rastafactory.h
     rasta/headers/rastahandle.h
-    rasta/headers/rastalist.h
+    rasta/headers/rasta_lib.h
     rasta/headers/rastamd4.h
     rasta/headers/rastamodule.h
     rasta/headers/rastaredundancy_new.h
@@ -55,9 +55,9 @@ add_library(${target} SHARED
     rasta/c/rastadeferqueue.c
     rasta/c/rastafactory.c
     rasta/c/rastahandle.c
-    rasta/c/rastalist.c
     rasta/c/rastamd4.c
     rasta/c/rastamodule.c
+    rasta/c/rasta_lib.c
     rasta/c/rastaredundancy_new.c
     rasta/c/rastautil.c
     rasta/c/rmemory.c

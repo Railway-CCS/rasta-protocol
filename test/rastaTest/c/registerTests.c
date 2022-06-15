@@ -75,7 +75,7 @@ void gradle_cunit_register() {
     CU_add_test(pSuiteMath, "test_deferqueue_get_ts_doesnt_contain", test_deferqueue_get_ts_doesnt_contain);
 
     //tests for rastalist
-    CU_add_test(pSuiteMath, "check_rastalist", check_rastalist);
+    //CU_add_test(pSuiteMath, "check_rastalist", check_rastalist);
 
     // Tests for the FIFO
     CU_add_test(pSuiteMath, "test_push", test_push);

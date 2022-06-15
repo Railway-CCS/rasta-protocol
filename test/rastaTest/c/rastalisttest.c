@@ -2,9 +2,11 @@
 // Created by tobia on 05.02.2018.
 //
 
+// no rastalist -> no rastalist test
+
+/*
 #include "../headers/rastalisttest.h"
 #include <CUnit/Basic.h>
-#include "rastalist.h"
 
 void check_rastalist() {
     //check sr part
@@ -42,3 +44,4 @@ void check_rastalist() {
 
 
 }
+*/

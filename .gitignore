@@ -23,3 +23,11 @@ assets/usr
 
 # exclude documentation files
 doc/
+
+.cmake
+Makefile
+*cmake*
+*CMake*
+*/bin/*
+test/
+*.tcl

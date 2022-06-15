@@ -69,7 +69,7 @@ struct timeout_event_data {
  * @param carry_data the carry data to initialize
  * @param mux the redundancy_mux that will contain channels
  */
-void init_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux, int open);
+void init_channel_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux, int open);
 
 /**
  * representation of a redundancy layer multiplexer.
