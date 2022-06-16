@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "rasta_new.h"
-#include "rmemory.h"
+#include <rasta_lib.h>
+#include <rmemory.h>
 
 #define CONFIG_PATH_S "rasta_server_local.cfg"
 #define CONFIG_PATH_C1 "rasta_client1_local.cfg"
@@ -120,37 +120,22 @@ void onReceive(struct rasta_notification_result *result) {
 
             printf("\nSend it to other client \n");
 
-            unsigned long target;
-            if (p.id == ID_S1) {
-                while (client2) {sleep(1);}
-                target = ID_S2;
+            for (struct rasta_connection* con = result->handle->first_con; con; con = con->linkedlist_next) {
+                if (con->remote_id != p.id) {
+                    printf("Client message from %lu is now send to %lu\n", p.id, (long unsigned int) con->remote_id);
+
+                    struct RastaMessageData messageData1;
+                    allocateRastaMessageData(&messageData1, 1);
+
+                    addRastaString(&messageData1,0,(char*)p.appMessage.bytes);
+                    sr_send(result->handle, con->remote_id, messageData1);
+                    freeRastaMessageData(&messageData1);
+
+                    printf("Message forwarded\n");
+                    printf("Disconnect to client %lu \n\n\n", (long unsigned int) con->remote_id);
+                    sr_disconnect(result->handle, con);
+                }
             }
-            else {
-                while (client1) {sleep(1);}
-                target = ID_S1;
-            }
-
-            printf("Client message from %lu is now send to %lu\n", p.id,target);
-
-            struct RastaMessageData messageData1;
-            allocateRastaMessageData(&messageData1, 1);
-
-            addRastaString(&messageData1,0,(char*)p.appMessage.bytes);
-
-
-
-            sr_send(result->handle,target,messageData1);
-
-            printf("Message forwarded\n");
-
-            sleep(1);
-
-            printf("Disconnect to client %lu \n\n\n", target);
-
-            sr_disconnect(result->handle,target);
-
-
-
             break;
         case ID_S1: case ID_S2:
             printf("\nReceived data from Server %u", result->connection.remote_id);
@@ -174,31 +159,41 @@ struct connect_event_data {
     fd_event * schwarzenegger;
 };
 
-int connect_on_stdin(void * carry_data) {
-    printf("try to connect\n");
+int connect_on_stdin(void* carry_data) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 
     printf("->   Connection request sent to 0x%lX\n", (unsigned long)ID_R);
-    struct connect_event_data * data = carry_data;
+    struct connect_event_data* data = carry_data;
     sr_connect(data->h, ID_R, data->ip_data_arr);
     enable_fd_event(data->schwarzenegger);
     disable_fd_event(data->connect_event);
     return 0;
 }
 
-int terminator(void * h) {
+int terminator(void* h) {
+    printf("terminating\n");
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
     sr_cleanup(h);
     return 1;
 }
 
+void* on_con_start(rasta_lib_connection_t connection) {
+    (void) connection;
+    return malloc(sizeof(rasta_lib_connection_t));
+}
+
+void on_con_end(rasta_lib_connection_t connection, void* memory) {
+    (void) connection;
+    free(memory);
+}
+
 int main(int argc, char *argv[]){
 
     if (argc != 2) printHelpAndExit();
 
-    struct rasta_handle h;
+    rasta_lib_configuration_t rc;
 
     struct RastaIPData toServer[2];
 
@@ -207,59 +202,70 @@ int main(int argc, char *argv[]){
     toServer[0].port = 8888;
     toServer[1].port = 8889;
 
-    fd_event fd_events[2];
+    fd_event termination_event, connect_on_stdin_event;
     struct connect_event_data connect_on_stdin_event_data = {
-        .h = &h,
+        .h = &rc->h,
         .ip_data_arr = toServer,
-        .connect_event = &fd_events[1],
-        .schwarzenegger = &fd_events[0]
+        .schwarzenegger = &termination_event,
+        .connect_event = &connect_on_stdin_event
     };
 
-    fd_events[0].callback = terminator;
-    fd_events[0].carry_data = &h;
-    fd_events[0].fd = STDIN_FILENO;
-    fd_events[0].enabled = 0;
+    termination_event.callback = terminator;
+    termination_event.carry_data = &rc->h;
+    termination_event.fd = STDIN_FILENO;
 
-    fd_events[1].callback = connect_on_stdin;
-    fd_events[1].carry_data = &connect_on_stdin_event_data;
-    fd_events[1].fd = STDIN_FILENO;
-    fd_events[1].enabled = 0;
+    connect_on_stdin_event.callback = connect_on_stdin;
+    connect_on_stdin_event.carry_data = &connect_on_stdin_event_data;
+    connect_on_stdin_event.fd = STDIN_FILENO;
 
     if (strcmp(argv[1], "r") == 0) {
         printf("->   R (ID = 0x%lX)\n", (unsigned long)ID_R);
+        rasta_lib_init_configuration(rc, CONFIG_PATH_S);
+        rc->h.user_handles->on_connection_start = on_con_start;
+        rc->h.user_handles->on_disconnect = on_con_end;
 
         getchar();
-        sr_init_handle(&h, CONFIG_PATH_S);
-        h.notifications.on_connection_state_change = onConnectionStateChange;
-        h.notifications.on_receive = onReceive;
-        h.notifications.on_handshake_complete = onHandshakeCompleted;
-        h.notifications.on_heartbeat_timeout = onTimeout;
-        enable_fd_event(&fd_events[0]);
-        sr_begin(&h, fd_events, 1, 1);
+        rc->h.notifications.on_connection_state_change = onConnectionStateChange;
+        rc->h.notifications.on_receive = onReceive;
+        rc->h.notifications.on_handshake_complete = onHandshakeCompleted;
+        rc->h.notifications.on_heartbeat_timeout = onTimeout;
+        enable_fd_event(&termination_event);
+        disable_fd_event(&connect_on_stdin_event);
+        add_fd_event(&rc->rasta_lib_event_system, &termination_event, EV_READABLE);
+        add_fd_event(&rc->rasta_lib_event_system, &connect_on_stdin_event, EV_READABLE);
+        rasta_lib_start(rc);
     }
     else if (strcmp(argv[1], "s1") == 0) {
         printf("->   S1 (ID = 0x%lX)\n", (unsigned long)ID_S1);
+        rasta_lib_init_configuration(rc, CONFIG_PATH_C1);
+        rc->h.user_handles->on_connection_start = on_con_start;
+        rc->h.user_handles->on_disconnect = on_con_end;
 
-        sr_init_handle(&h, CONFIG_PATH_C1);
-        h.notifications.on_connection_state_change = onConnectionStateChange;
-        h.notifications.on_receive = onReceive;
-        h.notifications.on_handshake_complete = onHandshakeCompleted;
+        rc->h.notifications.on_connection_state_change = onConnectionStateChange;
+        rc->h.notifications.on_receive = onReceive;
+        rc->h.notifications.on_handshake_complete = onHandshakeCompleted;
         printf("->   Press Enter to connect\n");
-        disable_fd_event(&fd_events[0]);
-        enable_fd_event(&fd_events[1]);
-        sr_begin(&h, fd_events, 2, 0);
+        disable_fd_event(&termination_event);
+        enable_fd_event(&connect_on_stdin_event);
+        add_fd_event(&rc->rasta_lib_event_system, &termination_event, EV_READABLE);
+        add_fd_event(&rc->rasta_lib_event_system, &connect_on_stdin_event, EV_READABLE);
+        rasta_lib_start(rc);
     }
     else if (strcmp(argv[1], "s2") == 0) {
         printf("->   S2 (ID = 0x%lX)\n", (unsigned long)ID_S2);
+        rasta_lib_init_configuration(rc, CONFIG_PATH_C2);
+        rc->h.user_handles->on_connection_start = on_con_start;
+        rc->h.user_handles->on_disconnect = on_con_end;
 
-        sr_init_handle(&h, CONFIG_PATH_C2);
-        h.notifications.on_connection_state_change = onConnectionStateChange;
-        h.notifications.on_receive = onReceive;
-        h.notifications.on_handshake_complete = onHandshakeCompleted;
+        rc->h.notifications.on_connection_state_change = onConnectionStateChange;
+        rc->h.notifications.on_receive = onReceive;
+        rc->h.notifications.on_handshake_complete = onHandshakeCompleted;
         printf("->   Press Enter to connect\n");
-        disable_fd_event(&fd_events[0]);
-        enable_fd_event(&fd_events[1]);
-        sr_begin(&h, fd_events, 2, 0);
+        disable_fd_event(&termination_event);
+        enable_fd_event(&connect_on_stdin_event);
+        add_fd_event(&rc->rasta_lib_event_system, &termination_event, EV_READABLE);
+        add_fd_event(&rc->rasta_lib_event_system, &connect_on_stdin_event, EV_READABLE);
+        rasta_lib_start(rc);
     }
 }
 

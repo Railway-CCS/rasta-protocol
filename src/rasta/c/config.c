@@ -759,7 +759,7 @@ struct RastaConfig config_load(const char filename[256]) {
 
     FILE *f;
     char buf[CONFIG_BUFFER_LENGTH];
-    struct RastaConfig config;
+    struct RastaConfig config = {0};
     strcpy(config.filename,filename);
 
     config.logger = logger_init(LOG_LEVEL_INFO,LOGGER_TYPE_CONSOLE);

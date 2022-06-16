@@ -1446,7 +1446,7 @@ void sr_init_handle_manually(struct rasta_handle *handle, struct RastaConfigInfo
     rasta_handle_manually_init(handle,configuration,accepted_version, logger);
 
     // init the redundancy layer
-    handle->mux = redundancy_mux_init_(handle->redlogger,handle->config.values);
+    handle->mux = redundancy_mux_init_(handle->redlogger, handle->config.values);
     //redundancy_mux_set_config_id(&handle->mux,handle->own_id);
     // register redundancy layer diagnose notification handler
     handle->mux.notifications.on_diagnostics_available = handle->notifications.on_redundancy_diagnostic_notification;
@@ -1464,7 +1464,7 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
     rasta_handle_init(handle, config_file_path);
 
     // init the redundancy layer
-    handle->mux = redundancy_mux_init_(handle->redlogger,handle->config.values);
+    handle->mux = redundancy_mux_init_(handle->redlogger, handle->config.values);
     //redundancy_mux_set_config_id(&handle->mux,handle->own_id);
     // register redundancy layer diagnose notification handler
     handle->mux.notifications.on_diagnostics_available = handle->notifications.on_redundancy_diagnostic_notification;

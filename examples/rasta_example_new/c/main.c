@@ -147,10 +147,14 @@ void onReceive(struct rasta_notification_result *result) {
 
             printf("Disconnect to client %lu \n\n\n", target);
 
-            sr_disconnect(result->handle,target);
+            struct rasta_connection* con;
+            for (con = result->handle->first_con; con; con = con->linkedlist_next) {
+                if (con->remote_id == p.id) {
+                    break;
+                }
+            }
 
-
-
+            sr_disconnect(result->handle, con);
             break;
         case ID_S1: case ID_S2:
             printf("\nReceived data from Server %u", result->connection.remote_id);
