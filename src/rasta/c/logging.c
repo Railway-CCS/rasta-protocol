@@ -1,3 +1,4 @@
+#ifdef ENABLE_LOGGING
 #include <time.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -6,9 +7,10 @@
 #include <unistd.h>
 #include <string.h>
 #include "rmemory.h"
-#include "logging.h"
 #include <syscall.h>
-#include <logging.h>
+#endif
+
+#include "logging.h"
 
 #define UNUSED(x) (void)(x)
 
@@ -18,7 +20,7 @@
  */
 void log_to_console(const char *message)
 {
-#ifdef logging
+#ifdef ENABLE_LOGGING
     printf("%s", message);
     // flush buffer
     fflush(stdout);
@@ -34,7 +36,7 @@ void log_to_console(const char *message)
  */
 void log_to_file(const char *message, const char *log_file)
 {
-#ifdef logging
+#ifdef ENABLE_LOGGING
     // check if path to log file has been set
     if (log_file == NULL)
     {
@@ -70,7 +72,7 @@ void log_to_file(const char *message, const char *log_file)
  */
 char *get_log_message_string(log_level max_log_level, log_level level, char *location, char *msg_str)
 {
-#ifdef logging
+#ifdef ENABLE_LOGGING
     // check if maximum log level allows this message
     if (level > max_log_level)
     {
@@ -134,15 +136,14 @@ struct logger_t logger_init(log_level max_log_level, logger_type type)
 {
     struct logger_t logger = {0};
 
-#ifdef logging
-    logger->log_file = path;
+#ifdef ENABLE_LOGGING
     logger.type = type;
     logger.max_log_level = max_log_level;
     logger.log_file = NULL;
 
     // init the buffer FIFO
     logger.buffer = fifo_init(LOGGER_BUFFER_SIZE);
-    #else
+#else
     UNUSED(max_log_level);
     UNUSED(type);
 #endif
@@ -152,7 +153,7 @@ struct logger_t logger_init(log_level max_log_level, logger_type type)
 
 void logger_set_log_file(struct logger_t *logger, char *path)
 {
-#ifdef logging
+#ifdef ENABLE_LOGGING
     logger->log_file = path;
 #else
     UNUSED(logger);
@@ -162,7 +163,7 @@ void logger_set_log_file(struct logger_t *logger, char *path)
 
 void logger_log(struct logger_t *logger, log_level level, char *location, char *format, ...)
 {
-#ifdef logging
+#ifdef ENABLE_LOGGING
     if (logger == NULL || logger->max_log_level == LOG_LEVEL_NONE)
     {
         return;
@@ -214,7 +215,7 @@ void logger_log(struct logger_t *logger, log_level level, char *location, char *
 
 void logger_log_if(struct logger_t *logger, int cond, log_level level, char *location, char *format, ...)
 {
-#ifdef logging
+#ifdef ENABLE_LOGGING
     if (!cond)
     {
         // condition false -> nothing to log
@@ -255,7 +256,7 @@ void logger_log_if(struct logger_t *logger, int cond, log_level level, char *loc
 
 void logger_destroy(struct logger_t *logger)
 {
-#ifdef logging
+#ifdef ENABLE_LOGGING
 
     // free all remaining log messages
     char *elem;

@@ -127,6 +127,16 @@ target_compile_options(${target}
     ${DEFAULT_COMPILE_OPTIONS}
 )
 
+if(${ENABLE_LOGGING})
+message("Logging is enabled")
+target_compile_definitions(${target}
+PRIVATE
+ENABLE_LOGGING
+)
+else()
+message("Logging is disabled")
+endif(ENABLE_LOGGING)
+
 # Installation for library
 install(TARGETS ${target}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

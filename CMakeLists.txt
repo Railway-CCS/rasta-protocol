@@ -12,6 +12,7 @@ option(BUILD_RASTA_GRPC_BRIDGE "Build the RaSTA/gRPC bridge" OFF)
 option(EXAMPLE_IP_OVERRIDE "Use IPs from environment variables in RaSTA/SCI examples" OFF)
 option(ENABLE_CODE_COVERAGE "Provide command to generate code coverage report" OFF)
 option(ENABLE_STATIC_ANALYSIS "Run cppcheck along with the compiler" OFF)
+option(ENABLE_LOGGING "Turn logging on" OFF)
 
 if(ENABLE_STATIC_ANALYSIS)
     set(CMAKE_C_CPPCHECK "cppcheck" "--enable=performance,information")
