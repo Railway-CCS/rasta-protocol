@@ -141,7 +141,7 @@ struct DictionaryEntry dictionary_get(struct Dictionary* dict, const char* key) 
     struct DictionaryEntry result;
     result.type = DICTIONARY_ERROR;
     char nkey[256];
-    strncpy(nkey,key, sizeof(key)-1);
+    strncpy(nkey,key, 255);
     uppercase(nkey);
     for (unsigned int i = 0; i < dict->size; i++) {
         if (strcmp(nkey, dict->data[i].key) == 0) {
