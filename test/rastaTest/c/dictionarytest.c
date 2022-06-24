@@ -4,9 +4,9 @@
 
 #include "../headers/dictionarytest.h"
 #include "dictionary.h"
-#include "string.h"
+#include <string.h>
 #include <CUnit/Basic.h>
-#include "stdio.h"
+#include <stdio.h>
 
 void testDictionary() {
     struct Dictionary dict = dictionary_create(0);

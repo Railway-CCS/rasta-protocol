@@ -12,15 +12,15 @@ extern "C" {  // only need to export C interface if
 /**
  * Message type of a SCI-P change location command
  */
-#define SCIP_MESSAGE_TYPE_CHANGE_LOCATION 0x0100
+#define SCIP_MESSAGE_TYPE_CHANGE_LOCATION 0x0001
 /**
  * Message type of a SCI-P location status message
  */
-#define SCIP_MESSAGE_TYPE_LOCATION_STATUS 0x0B00
+#define SCIP_MESSAGE_TYPE_LOCATION_STATUS 0x000B
 /**
  * Message type of a SCI-P timeout message
  */
-#define SCIP_MESSAGE_TYPE_TIMEOUT 0x0C00
+#define SCIP_MESSAGE_TYPE_TIMEOUT 0x000C
 
 /**
  * Enumeration with the allowed results for a location change command

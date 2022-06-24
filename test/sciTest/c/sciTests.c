@@ -34,7 +34,7 @@ void testEncode(){
 
     struct RastaByteArray res = sci_encode_telegram(telegram);
 
-    CU_ASSERT_EQUAL(0, memcmp(expected_telegram, res.bytes, res.length));
+    CU_ASSERT_NSTRING_EQUAL(expected_telegram, res.bytes, res.length);
 
     rfree(telegram);
 }
@@ -63,10 +63,10 @@ void testDecode(){
     CU_ASSERT_NSTRING_EQUAL(telegram->sender, "ab__________________", SCI_NAME_LENGTH);
     CU_ASSERT_NSTRING_EQUAL(telegram->receiver, "cd__________________", SCI_NAME_LENGTH);
 
-    CU_ASSERT_EQUAL(0, memcmp(telegram->message_type, message_type, 2));
+    CU_ASSERT_NSTRING_EQUAL(telegram->message_type, message_type, 2);
 
     CU_ASSERT_EQUAL(telegram->payload.used_bytes, 1);
-    CU_ASSERT_EQUAL(0, memcmp(telegram->payload.data, payload, telegram->payload.used_bytes));
+    CU_ASSERT_NSTRING_EQUAL(telegram->payload.data, payload, telegram->payload.used_bytes);
 
     rfree(telegram);
     freeRastaByteArray(&data);
@@ -153,7 +153,7 @@ void testSetMessageType(){
 void testCreateVersionRequest(){
     unsigned char expected[] = {
             0x30,
-            0x00, 0x24,
+            0x24, 0x00,
             0x61, 0x62, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F,
             0x63, 0x64, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F,
             0x01
@@ -162,7 +162,7 @@ void testCreateVersionRequest(){
     sci_telegram * telegram = sci_create_version_request(SCI_PROTOCOL_LS, "ab", "cd", 0x01);
     struct RastaByteArray res = sci_encode_telegram(telegram);
 
-    CU_ASSERT_EQUAL(0, memcmp(res.bytes, expected, res.length));
+    CU_ASSERT_NSTRING_EQUAL(res.bytes, expected, res.length);
 
     rfree(telegram);
     freeRastaByteArray(&res);
@@ -171,7 +171,7 @@ void testCreateVersionRequest(){
 void testCreateVersionResponse(){
     unsigned char expected[] = {
             0x30,
-            0x00, 0x25,
+            0x25, 0x00,
             0x61, 0x62, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F,
             0x63, 0x64, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F,
             0x02,
@@ -186,7 +186,7 @@ void testCreateVersionResponse(){
     sci_telegram * telegram = sci_create_version_response(SCI_PROTOCOL_LS, "ab", "cd", 0x02, SCI_VERSION_CHECK_RESULT_VERSIONS_ARE_EQUAL, 2, checksum);
     struct RastaByteArray res = sci_encode_telegram(telegram);
 
-    CU_ASSERT_EQUAL(0, memcmp(res.bytes, expected, res.length));
+    CU_ASSERT_NSTRING_EQUAL(res.bytes, expected, res.length);
 
     rfree(telegram);
     freeRastaByteArray(&res);
@@ -195,7 +195,7 @@ void testCreateVersionResponse(){
 void testCreateStatusRequest(){
     unsigned char expected[] = {
             0x30,
-            0x00, 0x21,
+            0x21, 0x00,
             0x61, 0x62, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F,
             0x63, 0x64, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F
     };
@@ -203,7 +203,7 @@ void testCreateStatusRequest(){
     sci_telegram * telegram = sci_create_status_request(SCI_PROTOCOL_LS, "ab", "cd");
     struct RastaByteArray res = sci_encode_telegram(telegram);
 
-    CU_ASSERT_EQUAL(0, memcmp(res.bytes, expected, res.length));
+    CU_ASSERT_NSTRING_EQUAL(res.bytes, expected, res.length);
 
     rfree(telegram);
     freeRastaByteArray(&res);
@@ -212,7 +212,7 @@ void testCreateStatusRequest(){
 void testCreateStatusBegin(){
     unsigned char expected[] = {
             0x30,
-            0x00, 0x22,
+            0x22, 0x00,
             0x61, 0x62, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F,
             0x63, 0x64, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F
     };
@@ -220,7 +220,7 @@ void testCreateStatusBegin(){
     sci_telegram * telegram = sci_create_status_begin(SCI_PROTOCOL_LS, "ab", "cd");
     struct RastaByteArray res = sci_encode_telegram(telegram);
 
-    CU_ASSERT_EQUAL(0, memcmp(res.bytes, expected, res.length));
+    CU_ASSERT_NSTRING_EQUAL(res.bytes, expected, res.length);
 
     rfree(telegram);
     freeRastaByteArray(&res);
@@ -229,7 +229,7 @@ void testCreateStatusBegin(){
 void testCreateStatusFinish(){
     unsigned char expected[] = {
             0x40,
-            0x00, 0x23,
+            0x23, 0x00,
             0x61, 0x62, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F,
             0x63, 0x64, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F, 0x5F
     };
@@ -237,7 +237,7 @@ void testCreateStatusFinish(){
     sci_telegram * telegram = sci_create_status_finish(SCI_PROTOCOL_P, "ab", "cd");
     struct RastaByteArray res = sci_encode_telegram(telegram);
 
-    CU_ASSERT_EQUAL(0, memcmp(res.bytes, expected, res.length));
+    CU_ASSERT_NSTRING_EQUAL(res.bytes, expected, res.length);
 
     rfree(telegram);
     freeRastaByteArray(&res);
@@ -279,7 +279,7 @@ void testParseVersionResponse(){
     CU_ASSERT_EQUAL(version, 0x01);
     CU_ASSERT_EQUAL(len, 2);
     CU_ASSERT_EQUAL(version_check_result, SCI_VERSION_CHECK_RESULT_VERSIONS_ARE_EQUAL);
-    CU_ASSERT_EQUAL(0, memcmp(checksum, expected_checksum, 2));
+    CU_ASSERT_NSTRING_EQUAL(checksum, expected_checksum, 2);
 
     telegram->payload.used_bytes = 3;
     result = sci_parse_version_response_payload(telegram, &version, &version_check_result, &len, &checksum[0]);
