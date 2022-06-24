@@ -312,7 +312,7 @@ int isWirelessNic(const char* ifname, char* protocol) {
     int sock = -1;
     struct iwreq pwrq;
     memset(&pwrq, 0, sizeof(pwrq));
-    strncpy(pwrq.ifr_name, ifname, IFNAMSIZ);
+    strncpy(pwrq.ifr_name, ifname, IFNAMSIZ-1);
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
         perror("socket");
@@ -410,7 +410,7 @@ struct RastaIPData extractIPData(char data[256], int arrayIndex) {
         pos = 1;
     } else {
         //check ip format
-        for (int i = 0; i < strlen(data); i++) {
+        for (unsigned int i = 0; i < strlen(data); i++) {
             if (isdigit(data[i])) {
                 numbers++;
                 if (numbers > 3) {
@@ -444,7 +444,7 @@ struct RastaIPData extractIPData(char data[256], int arrayIndex) {
 
     //get port
     int j = 0;
-    for (int i = pos+1; i < strlen(data); i++) {
+    for (unsigned int i = pos+1; i < strlen(data); i++) {
         if (isdigit(data[i])) {
             port[j] = data[i];
         }
@@ -460,7 +460,7 @@ struct RastaIPData extractIPData(char data[256], int arrayIndex) {
 }
 
 /**
- * sets the standart values in config
+ * sets the standard values in config
  * @param cfg
  */
 void config_setstd(struct RastaConfig * cfg) {
@@ -639,7 +639,7 @@ void config_setstd(struct RastaConfig * cfg) {
 
     //redundancy channels
     entr = config_get(cfg, "RASTA_REDUNDANCY_CONNECTIONS");
-    if (entr.type != DICTIONARY_ARRAY || entr.value.array.count < 0) {
+    if (entr.type != DICTIONARY_ARRAY || entr.value.array.count == 0) {
         //set std
         cfg->values.redundancy.connections.count = 0;
     }
@@ -647,7 +647,7 @@ void config_setstd(struct RastaConfig * cfg) {
         cfg->values.redundancy.connections.data = rmalloc(sizeof(struct RastaIPData) * entr.value.array.count);
         cfg->values.redundancy.connections.count = entr.value.array.count;
         //check valid format
-        for (int i = 0; i < entr.value.array.count; i++) {
+        for (unsigned int i = 0; i < entr.value.array.count; i++) {
             struct RastaIPData ip = extractIPData(entr.value.array.data[i].c, i);
             if (ip.port == 0) {
                 logger_log(&cfg->logger,LOG_LEVEL_ERROR, cfg->filename, "RASTA_REDUNDANCY_CONNECTIONS may only contain strings in format ip:port or *:port");
@@ -759,7 +759,7 @@ struct RastaConfig config_load(const char filename[256]) {
 
     FILE *f;
     char buf[CONFIG_BUFFER_LENGTH];
-    struct RastaConfig config;
+    struct RastaConfig config = {0};
     strcpy(config.filename,filename);
 
     config.logger = logger_init(LOG_LEVEL_INFO,LOGGER_TYPE_CONSOLE);
@@ -833,8 +833,8 @@ struct RastaConfig config_load(const char filename[256]) {
 }
 
 
-struct DictionaryEntry config_get(struct RastaConfig * cfg, char key[256]) {
-    return dictionary_get(&cfg->dictionary,key);
+struct DictionaryEntry config_get(struct RastaConfig * cfg, const char* key) {
+    return dictionary_get(&cfg->dictionary, key);
 }
 
 void config_free(struct RastaConfig *cfg) {

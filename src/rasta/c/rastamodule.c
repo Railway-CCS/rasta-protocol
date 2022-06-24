@@ -1,5 +1,7 @@
 #include "rastamodule.h"
 #include "rmemory.h"
+#include <endian.h>
+
 //
 // Created by tobia on 27.11.2017.
 //
@@ -14,35 +16,23 @@ rasta_error_type getRastamoduleLastError() {
     return temp;
 }
 /**
- * Converts a unsigned short into a uchar array
+ * Converts a unsigned short into a uchar array in little-endian byte order
  * @param v the ushort
  * @param result the assigned uchar array; length should be 2
  */
-void shortToBytes(uint16_t v, unsigned char* result) {
-    if (!isBigEndian()) {
-        result[1] = (unsigned char) (v >> 8 & 0xFF);
-        result[0] = (unsigned char) (v & 0xFF);
-    }
-    else {
-        result[0] = (unsigned char) (v >> 8 & 0xFF);
-        result[1] = (unsigned char) (v & 0xFF);
-    }
+void hostShortTole(uint16_t v, unsigned char* result) {
+    uint16_t *target = (uint16_t *) result;
+    *target = htole16(v);
 }
 
 /**
- * Converts a uchar array to a ushort
- * @param v the uchar array
+ * Converts a uchar pointer to a ushort in host byte order
+ * @param v pointer to 2 bytes in little-endian byte order
  * @return the ushort
  */
-uint16_t bytesToShort(const unsigned char v[2]) {
-    uint16_t result = 0;
-    if (!isBigEndian()) {
-        result = (v[1] << 8) + v[0];
-    }
-    else {
-        result = (v[0] << 8) + v[1];
-    }
-    return result;
+uint16_t leShortToHost(const unsigned char *v) {
+    const uint16_t *value_network_byte_order = (uint16_t *) v;
+    return le16toh(*value_network_byte_order);
 }
 
 
@@ -77,66 +67,36 @@ struct RastaByteArray allocateBytes(struct RastaPacket packet, rasta_hashing_con
  * @param packet the packet to pack
  */
 void packFields(struct RastaByteArray result, struct RastaPacket packet) {
-    unsigned char temp[4];
 
     //pack message length
-    shortToBytes(packet.length, temp);
-    result.bytes[0] = temp[0];
-    result.bytes[1] = temp[1];
+    hostShortTole(packet.length, &result.bytes[0]);
 
     //pack message type
     uint16_t type = packet.type;
 
-    shortToBytes(type, temp);
-    result.bytes[2] = temp[0];
-    result.bytes[3] = temp[1];
+    hostShortTole(type, &result.bytes[2]);
 
     //pack receiver id
-    longToBytes(packet.receiver_id, temp);
-    result.bytes[4] = temp[0];
-    result.bytes[5] = temp[1];
-    result.bytes[6] = temp[2];
-    result.bytes[7] = temp[3];
+    hostLongToLe(packet.receiver_id, &result.bytes[4]);
 
     //pack sender id
-    longToBytes(packet.sender_id, temp);
-    result.bytes[8] = temp[0];
-    result.bytes[9] = temp[1];
-    result.bytes[10] = temp[2];
-    result.bytes[11] = temp[3];
+    hostLongToLe(packet.sender_id, &result.bytes[8]);
 
     //pack sequence number
-    longToBytes(packet.sequence_number, temp);
-    result.bytes[12] = temp[0];
-    result.bytes[13] = temp[1];
-    result.bytes[14] = temp[2];
-    result.bytes[15] = temp[3];
+    hostLongToLe(packet.sequence_number, &result.bytes[12]);
 
     //pack confirmed sequence number
-    longToBytes(packet.confirmed_sequence_number, temp);
-    result.bytes[16] = temp[0];
-    result.bytes[17] = temp[1];
-    result.bytes[18] = temp[2];
-    result.bytes[19] = temp[3];
+    hostLongToLe(packet.confirmed_sequence_number, &result.bytes[16]);
 
     //pack timestamp
-    longToBytes(packet.timestamp, temp);
-    result.bytes[20] = temp[0];
-    result.bytes[21] = temp[1];
-    result.bytes[22] = temp[2];
-    result.bytes[23] = temp[3];
+    hostLongToLe(packet.timestamp, &result.bytes[20]);
 
     //pack confirmed timestamp
-    longToBytes(packet.confirmed_timestamp, temp);
-    result.bytes[24] = temp[0];
-    result.bytes[25] = temp[1];
-    result.bytes[26] = temp[2];
-    result.bytes[27] = temp[3];
+    hostLongToLe(packet.confirmed_timestamp, &result.bytes[24]);
 }
 
 
 struct RastaByteArray rastaModuleToBytes(struct RastaPacket packet, rasta_hashing_context_t * hashing_context) {
-    unsigned char temp[4];
     struct RastaByteArray result;
     result = allocateBytes(packet, hashing_context);
 
@@ -196,7 +156,6 @@ struct RastaByteArray rastaModuleToBytesNoChecksum(struct RastaPacket packet, ra
 }
 
 struct RastaPacket bytesToRastaPacket(struct RastaByteArray data, rasta_hashing_context_t * hashing_context) {
-    unsigned char temp[4];
     struct RastaPacket result;
 
     result.checksum_correct = 1;
@@ -209,58 +168,30 @@ struct RastaPacket bytesToRastaPacket(struct RastaByteArray data, rasta_hashing_
     }
 
     //length
-    temp[0] = data.bytes[0];
-    temp[1] = data.bytes[1];
-    result.length = bytesToShort(temp);
+    result.length = leShortToHost(&data.bytes[0]);
 
 
 
     //type
-    temp[0] = data.bytes[2];
-    temp[1] = data.bytes[3];
-    result.type = (rasta_conn_type)bytesToShort(temp);
+    result.type = (rasta_conn_type) leShortToHost(&data.bytes[2]);
 
     //receiver id
-    temp[0] = data.bytes[4];
-    temp[1] = data.bytes[5];
-    temp[2] = data.bytes[6];
-    temp[3] = data.bytes[7];
-    result.receiver_id = bytesToLong(temp);
+    result.receiver_id = leLongToHost(&data.bytes[4]);
 
     //sender id
-    temp[0] = data.bytes[8];
-    temp[1] = data.bytes[9];
-    temp[2] = data.bytes[10];
-    temp[3] = data.bytes[11];
-    result.sender_id = bytesToLong(temp);
+    result.sender_id = leLongToHost(&data.bytes[8]);
 
     //sequence number
-    temp[0] = data.bytes[12];
-    temp[1] = data.bytes[13];
-    temp[2] = data.bytes[14];
-    temp[3] = data.bytes[15];
-    result.sequence_number = bytesToLong(temp);
+    result.sequence_number = leLongToHost(&data.bytes[12]);
 
     //confirmed sequence number
-    temp[0] = data.bytes[16];
-    temp[1] = data.bytes[17];
-    temp[2] = data.bytes[18];
-    temp[3] = data.bytes[19];
-    result.confirmed_sequence_number = bytesToLong(temp);
+    result.confirmed_sequence_number = leLongToHost(&data.bytes[16]);
 
     //timestamp
-    temp[0] = data.bytes[20];
-    temp[1] = data.bytes[21];
-    temp[2] = data.bytes[22];
-    temp[3] = data.bytes[23];
-    result.timestamp = bytesToLong(temp);
+    result.timestamp = leLongToHost(&data.bytes[20]);
 
     //confirmed timestamp
-    temp[0] = data.bytes[24];
-    temp[1] = data.bytes[25];
-    temp[2] = data.bytes[26];
-    temp[3] = data.bytes[27];
-    result.confirmed_timestamp = bytesToLong(temp);
+    result.confirmed_timestamp = leLongToHost(&data.bytes[24]);
 
     //data
     result.data.length = 0;
@@ -295,27 +226,18 @@ struct RastaPacket bytesToRastaPacket(struct RastaByteArray data, rasta_hashing_
 
 
 struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket packet, rasta_hashing_context_t * hashing_context){
-    unsigned char temp[4];
-
+    uint8_t checksum_storage[sizeof(uint32_t)];
     struct RastaByteArray result;
     allocateRastaByteArray(&result, packet.length);
 
     // pack packet length
-    shortToBytes(packet.length, temp);
-    result.bytes[0] = temp[0];
-    result.bytes[1] = temp[1];
+    hostShortTole(packet.length, &result.bytes[0]);
 
     // pack reserve bytes
-    shortToBytes(packet.reserve, temp);
-    result.bytes[2] = temp[0];
-    result.bytes[3] = temp[1];
+    hostShortTole(packet.reserve, &result.bytes[2]);
 
     //pack sequence number
-    longToBytes(packet.sequence_number, temp);
-    result.bytes[4] = temp[0];
-    result.bytes[5] = temp[1];
-    result.bytes[6] = temp[2];
-    result.bytes[7] = temp[3];
+    hostLongToLe(packet.sequence_number, &result.bytes[4]);
 
     // convert internal RaSTA packet to bytes
     unsigned int internal_packet_len = packet.data.length;
@@ -341,9 +263,9 @@ struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket 
     unsigned long checksum = crc_calculate(&packet.checksum_type, temp_wo_checksum);
 
     // pack checksum
-    longToBytes(checksum, temp);
+    hostLongToLe(checksum, checksum_storage);
     for (int k = 0; k < (packet.checksum_type.width/8); ++k) {
-        result.bytes[8+internal_packet_len+k] = temp[k];
+        result.bytes[8+internal_packet_len+k] = checksum_storage[k];
     }
 
     // free the temporary checksum data
@@ -354,26 +276,17 @@ struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket 
 
 struct RastaRedundancyPacket bytesToRastaRedundancyPacket(struct RastaByteArray data, struct crc_options checksum_type, rasta_hashing_context_t * hashing_context){
     struct RastaRedundancyPacket packet;
-    unsigned char temp[4];
     packet.checksum_type = checksum_type;
 
     //length
-    temp[0] = data.bytes[0];
-    temp[1] = data.bytes[1];
-    packet.length = bytesToShort(temp);
+    packet.length = leShortToHost(&data.bytes[0]);
 
     // reserved bytes
-    temp[0] = data.bytes[2];
-    temp[1] = data.bytes[3];
-    packet.reserve = bytesToShort(temp);
+    packet.reserve = leShortToHost(&data.bytes[2]);
 
 
     //sequence number
-    temp[0] = data.bytes[4];
-    temp[1] = data.bytes[5];
-    temp[2] = data.bytes[6];
-    temp[3] = data.bytes[7];
-    packet.sequence_number = bytesToLong(temp);
+    packet.sequence_number = leLongToHost(&data.bytes[4]);
 
     // length of the carried data (the rasta packet) is total length - 8 bytes of length, reserve and seq nr before
     // and the in the checksum_type specified amount of bytes for the checksum after the data (divided by 8 because
@@ -420,7 +333,7 @@ struct RastaRedundancyPacket bytesToRastaRedundancyPacket(struct RastaByteArray 
 
     // convert the previously calculated checksum into byte array for comparison with data checksum
     unsigned char data_checksum[4];
-    longToBytes(calculated_checksum, data_checksum);
+    hostLongToLe(calculated_checksum, data_checksum);
 
     packet.checksum_correct = (rmemcmp(data_checksum, &data.bytes[8+data_len], (checksum_type.width / 8)) == 0);
 

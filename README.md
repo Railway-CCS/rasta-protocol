@@ -28,4 +28,4 @@ see [Docker HowTo](md_doc/docker.md)
 
 ## Contact
 
-This repository is maintained by Markus Heinrich ([rasta@0x25.net](mailto:rasta@0x25.net))
+This repository is maintained by Simon Giesel and the HPI

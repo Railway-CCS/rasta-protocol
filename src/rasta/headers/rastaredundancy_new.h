@@ -160,11 +160,6 @@ typedef struct {
     struct RastaConfigInfoRedundancy configuration_parameters;
 
     /**
-     * mutex to sync between threads
-     */
-    pthread_mutex_t channel_lock;
-
-    /**
      * Hashing context for en/decoding SR layer PDUs
      */
     rasta_hashing_context_t hashing_context;
