@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(rasta
-    LANGUAGES C
+    LANGUAGES C CXX
     DESCRIPTION "A C implementation of the RaSTA protocol stack")
 
 SET(USE_OPENSSL false CACHE BOOL "Use OpenSSL MD4 implementation")
@@ -8,6 +8,7 @@ SET(USE_OPENSSL false CACHE BOOL "Use OpenSSL MD4 implementation")
 option(BUILD_DOCUMENTATION "Generate documentation" OFF)
 option(BUILD_LOCAL_EXAMPLES "Build the RaSTA/SCI examples the run on localhost" ON)
 option(BUILD_REMOTE_EXAMPLES "Build the RaSTA/SCI examples that communicate in a network" ON)
+option(BUILD_RASTA_GRPC_BRIDGE "Build the RaSTA/gRPC bridge" OFF)
 option(EXAMPLE_IP_OVERRIDE "Use IPs from environment variables in RaSTA/SCI examples" OFF)
 option(ENABLE_CODE_COVERAGE "Provide command to generate code coverage report" OFF)
 option(ENABLE_STATIC_ANALYSIS "Run cppcheck along with the compiler" OFF)
@@ -50,6 +51,7 @@ set(EXECUTABLE_OUTPUT_PATH bin/exe/examples)
 set(LIBRARY_OUTPUT_PATH bin/lib)
 
 add_subdirectory(src)
+add_subdirectory(examples)
 
 if(BUILD_DOCUMENTATION)
     find_package(Doxygen REQUIRED dot)
@@ -85,4 +87,3 @@ endif(BUILD_DOCUMENTATION)
 if(BUILD_TESTING)
     add_subdirectory(test)
 endif(BUILD_TESTING)
-

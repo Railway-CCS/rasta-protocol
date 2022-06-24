@@ -52,3 +52,6 @@ endif(EXAMPLE_IP_OVERRIDE)
 
 endif(BUILD_REMOTE_EXAMPLES)
 
+if(BUILD_RASTA_GRPC_BRIDGE)
+add_subdirectory(rasta_grpc_bridge)
+endif(BUILD_RASTA_GRPC_BRIDGE)
