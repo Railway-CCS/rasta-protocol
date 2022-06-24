@@ -132,14 +132,20 @@ char *get_log_message_string(log_level max_log_level, log_level level, char *loc
 
 struct logger_t logger_init(log_level max_log_level, logger_type type)
 {
-    struct logger_t logger;
+    struct logger_t logger = {0};
 
+#ifdef logging
+    logger->log_file = path;
     logger.type = type;
     logger.max_log_level = max_log_level;
     logger.log_file = NULL;
 
     // init the buffer FIFO
     logger.buffer = fifo_init(LOGGER_BUFFER_SIZE);
+    #else
+    UNUSED(max_log_level);
+    UNUSED(type);
+#endif
 
     return logger;
 }
