@@ -11,23 +11,23 @@ extern "C" {  // only need to export C interface if
 /**
  * Message type of a SCI version request
  */
-#define SCI_MESSAGE_TYPE_VERSION_REQUEST 0x2400
+#define SCI_MESSAGE_TYPE_VERSION_REQUEST 0x0024
 /**
  * Message type of a SCI version response
  */
-#define SCI_MESSAGE_TYPE_VERSION_RESPONSE 0x2500
+#define SCI_MESSAGE_TYPE_VERSION_RESPONSE 0x0025
 /**
  * Message type of a SCI status request
  */
-#define SCI_MESSAGE_TYPE_STATUS_REQUEST 0x2100
+#define SCI_MESSAGE_TYPE_STATUS_REQUEST 0x0021
 /**
  * Message type of a SCI status begin message
  */
-#define SCI_MESSAGE_TYPE_STATUS_BEGIN 0x2200
+#define SCI_MESSAGE_TYPE_STATUS_BEGIN 0x0022
 /**
  * Message type of a SCI status finish message
  */
-#define SCI_MESSAGE_TYPE_STATUS_FINISH 0x2300
+#define SCI_MESSAGE_TYPE_STATUS_FINISH 0x0023
 
 /**
  * Return codes for functions that parse telegram payloads

@@ -28,7 +28,7 @@ void testBlake2Hash(){
 
     generateBlake2(test_vect, 1 , key, 64, 8, result);
 
-    CU_ASSERT_EQUAL(0, memcmp(expected_hash, result, 64));
+    CU_ASSERT_NSTRING_EQUAL(expected_hash, result, 64);
 
     rfree(key);
     rfree(test_vect);

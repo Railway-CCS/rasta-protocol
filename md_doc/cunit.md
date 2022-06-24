@@ -1,7 +1,7 @@
 # HowTo - CUnit tests
 
 ## Running the tests
-In Order to run all registered CUnit tests you build the project using Gradle (see [HowTo Gradle](md_doc/gradle.md)).  
+In Order to run all registered CUnit tests you build the project using CMake.  
 Note that there will only be an output about the unit tests if at least one test failed, so if the build is successful, all tests were successful too.
 
 ## Creating a new Unit test

@@ -43,7 +43,6 @@ See [docker.md](docker.md) for instructions on the examples.
 ## 3. Using the library
 You learned to compile the sources and run the example programs, now it's time to write your own program!
 In this section the various functions and some other things are listed and explained.
-If you don't know how to add a new executable to Gradle see [HowTo - Gradle](gradle.md).  
 
 #### Functions
 The complete functionality of the library can be used by including `rasta_new.h`.

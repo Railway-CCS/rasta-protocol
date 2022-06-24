@@ -69,7 +69,7 @@ sci_parse_result sci_parse_version_response_payload(sci_telegram * version_respo
     if(sci_get_message_type(version_response) != SCI_MESSAGE_TYPE_VERSION_RESPONSE){
         return SCI_PARSE_INVALID_MESSAGE_TYPE;
     }
-    if(version_response->payload.used_bytes < 4 || version_response->payload.used_bytes > 128){
+    if(version_response->payload.used_bytes < 3 || version_response->payload.used_bytes > 128){
         return SCI_PARSE_INVALID_PAYLOAD_LENGTH;
     }
 
@@ -80,8 +80,10 @@ sci_parse_result sci_parse_version_response_payload(sci_telegram * version_respo
     if(*checksum_len > (version_response->payload.used_bytes - 3)){
         return SCI_PARSE_INVALID_PAYLOAD_LENGTH;
     }
-
-    rmemcpy(checksum, &version_response->payload.data[3], *checksum_len);
+    // checksum might be empty
+    if(*checksum_len) {
+        rmemcpy(checksum, &version_response->payload.data[3], *checksum_len);
+    }
 
     return SCI_PARSE_SUCCESS;
 }

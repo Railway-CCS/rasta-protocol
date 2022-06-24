@@ -26,9 +26,7 @@ char * sci_get_name_string(char * name_field){
 }
 
 void sci_set_message_type(sci_telegram * telegram, unsigned short message_type){
-    unsigned char tmp[2];
-    shortToBytes(message_type, tmp);
-    rmemcpy(telegram->message_type, tmp, 2);
+    hostShortTole(message_type, telegram->message_type);
 }
 
 struct RastaByteArray sci_encode_telegram(sci_telegram * telegram){
@@ -91,5 +89,5 @@ sci_telegram * sci_decode_telegram(struct RastaByteArray data){
 }
 
 unsigned short sci_get_message_type(sci_telegram * telegram){
-    return bytesToShort(telegram->message_type);
+    return leShortToHost(telegram->message_type);
 }

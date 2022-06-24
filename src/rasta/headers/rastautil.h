@@ -39,14 +39,14 @@ int isBigEndian();
  * @param v the uchar array
  * @param result the assigned uchar array; length should be 4
  */
-void longToBytes(uint32_t v, unsigned char* result);
+void hostLongToLe(uint32_t v, unsigned char* result);
 
 /**
- * Converts a uchar array to a ulong
- * @param v the uchar array
+ * Converts 4 little-endian bytes to a host ulong
+ * @param v pointer to uint32_t in LE byte order
  * @return the ulong
  */
-uint32_t bytesToLong(const unsigned char v[4]);
+uint32_t leLongToHost(const unsigned char *v);
 
 #ifdef __cplusplus
 }

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "rastautil.h"
+#include <endian.h>
 
 
 uint32_t current_ts(){
@@ -39,28 +40,12 @@ int isBigEndian() {
     return ! *((char *) &i);
 }
 
-void longToBytes(uint32_t v, unsigned char* result) {
-    if (!isBigEndian()) {
-        result[3] = (unsigned char) (v >> 24 & 0xFF);
-        result[2] = (unsigned char) (v >> 16 & 0xFF);
-        result[1] = (unsigned char) (v >> 8 & 0xFF);
-        result[0] = (unsigned char) (v & 0xFF);
-    }
-    else {
-        result[0] = (unsigned char) (v >> 24 & 0xFF);
-        result[1] = (unsigned char) (v >> 16 & 0xFF);
-        result[2] = (unsigned char) (v >> 8 & 0xFF);
-        result[3] = (unsigned char) (v & 0xFF);
-    }
+void hostLongToLe(uint32_t v, unsigned char* result) {
+    uint32_t *target = (uint32_t *) result;
+    *target = htole32(v);
 }
 
-uint32_t bytesToLong(const unsigned char v[4]) {
-    uint32_t result = 0;
-    if (!isBigEndian()) {
-        result = (v[3] << 24) + (v[2] << 16) + (v[1] << 8) + v[0];
-    }
-    else {
-        result = (v[0] << 24) + (v[1] << 16) + (v[2] << 8) + v[3];
-    }
-    return result;
+uint32_t leLongToHost(const unsigned char v[4]) {
+    uint32_t *result = (uint32_t*) v;
+    return le32toh(*result);
 }

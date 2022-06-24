@@ -1,4 +1,8 @@
-#include "registerTests.h"
+#include <CUnit/Basic.h>
+
+#include "sciTests.h"
+#include "scipTests.h"
+#include "scilsTests.h"
 
 int suite_init(void) {
     return 0;
@@ -8,7 +12,7 @@ int suite_clean(void) {
     return 0;
 }
 
-void gradle_cunit_register() {
+void cunit_register() {
     CU_pSuite sci_suite = CU_add_suite("SCI protocol tests", suite_init, suite_clean);
 
     // Tests for the common SCI functions
@@ -51,16 +55,14 @@ void gradle_cunit_register() {
     CU_add_test(sci_suite, "testParseBrightnessStatus", testParseBrightnessStatus);
 }
 
-#ifdef WITH_CMAKE
 int main () {
     if (CUE_SUCCESS != CU_initialize_registry())
         return CU_get_error();
 
-    gradle_cunit_register();
+    cunit_register();
 
     CU_basic_run_tests();
     int ret = CU_get_number_of_failures();
     CU_cleanup_registry();
     return ret;
 }
-#endif

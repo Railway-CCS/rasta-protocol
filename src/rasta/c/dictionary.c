@@ -2,9 +2,9 @@
 // Created by tobia on 18.12.2017.
 //
 #include <ctype.h>
+#include <string.h>
 #include "rmemory.h"
 #include "dictionary.h"
-#include "string.h"
 
 /**
  * makes the string uppercase
@@ -141,7 +141,7 @@ struct DictionaryEntry dictionary_get(struct Dictionary* dict, const char* key) 
     struct DictionaryEntry result;
     result.type = DICTIONARY_ERROR;
     char nkey[256];
-    strncpy(nkey,key, sizeof(key)-1);
+    strncpy(nkey,key, 255);
     uppercase(nkey);
     for (unsigned int i = 0; i < dict->size; i++) {
         if (strcmp(nkey, dict->data[i].key) == 0) {

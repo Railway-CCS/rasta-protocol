@@ -327,12 +327,8 @@ void rastaServer(std::string rasta_channel1_address, std::string rasta_channel1_
                 // Establish gRPC connection
                 std::lock_guard<std::mutex> guard(s_busy);
                 s_currentContext = std::make_unique<grpc::ClientContext>();
-                // auto deadline = std::chrono::system_clock::now() +
-                //     std::chrono::milliseconds(5000);
-                // s_currentContext->set_deadline(deadline);
                 s_currentContext->AddMetadata("rasta-id", std::to_string(s_remote_id));
                 s_currentStream = stub->Stream(s_currentContext.get());
-                // s_currentContext->set_deadline(std::chrono::system_clock::time_point::max());
             }
 
             sci::SciPacket message;
@@ -367,100 +363,6 @@ void rastaServer(std::string rasta_channel1_address, std::string rasta_channel1_
 
     // Give the remote the chance to notice the possibly broken connection
     usleep(1000);
-
-    // auto onHandshakeCompleted = [](struct rasta_notification_result *result) {
-    //     s_remote_id = result->connection.remote_id;
-    //     s_handshake_condition.notify_one();
-    // };
-
-    // auto onReceive = [](struct rasta_notification_result *result) {
-    //     static std::mutex s_busy_writing;
-    //     std::lock_guard<std::mutex> guard(s_busy_writing);
-    //     rastaApplicationMessage p;
-    //     p = sr_get_received_data(result->handle, &result->connection);
-
-    //     std::lock_guard<std::mutex> streamGuard(s_busy);
-    //     if (s_currentStream != nullptr) {
-    //         sci::SciPacket outPacket;
-    //         outPacket.set_message(p.appMessage.bytes, p.appMessage.length);
-    //         s_currentStream->Write(outPacket);
-    //     }
-    // };
-
-    // auto onConnectionStateChange = [](struct rasta_notification_result *result) {
-    //     std::lock_guard<std::mutex> contextGuard(s_busy);
-    //     if (s_currentContext != nullptr && result->connection.current_state ==  RASTA_CONNECTION_CLOSED) {
-    //         s_currentContext->TryCancel();
-    //     }
-    // };
-
-    // while (true) {
-    //     sr_init_handle(&h, "rasta.cfg");
-    //     h.notifications.on_connection_state_change = onConnectionStateChange;
-    //     h.notifications.on_receive = onReceive;
-    //     h.notifications.on_handshake_complete = onHandshakeCompleted;
-
-    //     unsigned long localId = std::stoul(rasta_local_id);
-    //     unsigned long targetId = std::stoul(rasta_target_id);
-
-    //     if (localId < targetId) {
-    //         // This is a client, initiate handshake
-    //         struct RastaIPData toServer[2];
-    //         strcpy(toServer[0].ip, rasta_channel1_address.c_str());
-    //         toServer[0].port = std::stoi(rasta_channel1_port);
-    //         strcpy(toServer[1].ip, rasta_channel2_address.c_str());
-    //         toServer[1].port = std::stoi(rasta_channel2_port);
-    //         sr_connect(&h, targetId, toServer);
-    //     }
-
-    //     terminator_fd = eventfd(0, 0);
-    //     fd_event fd_event;
-    //     fd_event.callback = [](void* h) { sr_cleanup(reinterpret_cast<rasta_handle*>(h)); return 1; };
-    //     fd_event.carry_data = &h;
-    //     fd_event.fd = terminator_fd;
-    //     fd_event.enabled = 0;
-
-    //     enable_fd_event(&fd_event);
-    //     std::thread rasta_thread([&]() { sr_begin(&h, &fd_event, 1); });
-
-    //     std::unique_lock<std::mutex> handshake_complete(s_handshake_mutex);
-    //     s_handshake_condition.wait(handshake_complete);
-
-    //     auto channel = grpc::CreateChannel(grpc_server_address, grpc::InsecureChannelCredentials());
-    //     auto stub = sci::Rasta::NewStub(channel);
-
-    //     {
-    //         // Establish gRPC connection
-    //         std::lock_guard<std::mutex> guard(s_busy);
-    //         s_currentContext = std::make_unique<grpc::ClientContext>();
-    //         s_currentContext->AddMetadata("rasta-id", std::to_string(s_remote_id));
-    //         s_currentStream = stub->Stream(s_currentContext.get());
-    //     }
-
-    //     sci::SciPacket message;
-    //     while (s_currentStream->Read(&message)) {
-    //         struct RastaByteArray msg;
-    //         allocateRastaByteArray(&msg, message.message().size());
-    //         rmemcpy(msg.bytes, message.message().c_str(), message.message().size());
-
-    //         struct RastaMessageData messageData;
-    //         allocateRastaMessageData(&messageData, 1);
-    //         messageData.data_array[0] = msg;
-
-    //         sr_send(&h, targetId, messageData);
-
-    //         freeRastaMessageData(&messageData); // Also frees the byte array
-    //     }
-
-    //     uint64_t terminate = 1;
-    //     write(terminator_fd, &terminate, sizeof(uint64_t));
-
-    //     rasta_thread.join();
-    //     close(terminator_fd);
-
-    //     s_currentStream = nullptr;
-    //     s_currentContext = nullptr;
-    // }
 }
 
 int main(int argc, char * argv[]) {
@@ -486,9 +388,6 @@ int main(int argc, char * argv[]) {
     if (argc >= 9) {
         grpc_server_address = std::string(argv[8]);
     }
-
-    // unsigned long localId = std::stoul(rasta_local_id);
-    // unsigned long targetId = std::stoul(rasta_target_id);
 
     if (grpc_server_address.length() == 0) {
         // Start a gRPC server and wait for incoming connection before doing anything RaSTA
