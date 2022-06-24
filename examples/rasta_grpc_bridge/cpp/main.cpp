@@ -187,11 +187,11 @@ void handle_connection_state_change(struct rasta_notification_result *result) {
     }
 }
 
-void rasta_listen(struct rasta_handle *h, const char* config_file_path) {
-    sr_init_handle(h, config_file_path);
-    h->notifications.on_handshake_complete = handle_handshake_complete;
-    h->notifications.on_connection_state_change = handle_connection_state_change;
-    h->notifications.on_receive =  [](struct rasta_notification_result *result) {
+void rasta_listen(rasta_lib_configuration_t rc, const char* config_file_path) {
+    sr_init_handle(&rc->h, config_file_path);
+    rc->h.notifications.on_handshake_complete = handle_handshake_complete;
+    rc->h.notifications.on_connection_state_change = handle_connection_state_change;
+    rc->h.notifications.on_receive =  [](struct rasta_notification_result *result) {
         static std::mutex s_busy_writing;
         std::lock_guard<std::mutex> guard(s_busy_writing);
         rastaApplicationMessage p;
@@ -206,35 +206,47 @@ void rasta_listen(struct rasta_handle *h, const char* config_file_path) {
     };
 }
 
-int rasta_accept(struct rasta_handle *h, struct RastaChannel *channel, struct rasta_connection *connection) {
-    int con_id = rastalist_getConnectionId(&h->connections, channel->remote_id);
-    struct rasta_connection * existing_connection = rastalist_getConnection(&h->connections, con_id);
+int rasta_accept(rasta_lib_configuration_t rc, struct RastaChannel *channel, struct rasta_connection *connection) {
+    struct rasta_connection * existing_connection = NULL;
+    for (struct rasta_connection* con = rc->h.first_con; con; con = con->linkedlist_next) {
+        if (con->remote_id == channel->remote_id) {
+            existing_connection = con;
+            break;
+        }
+    }
+
     if ((existing_connection == NULL || existing_connection->current_state == RASTA_CONNECTION_CLOSED)
-        && h->config.values.general.rasta_id < channel->remote_id) {
+        && rc->h.config.values.general.rasta_id < channel->remote_id) {
         // This is a client, initiate handshake
-        sr_connect(h, channel->remote_id, channel->subchannels);
+        sr_connect(&rc->h, channel->remote_id, channel->subchannels);
     }
 
     // Wait until a handshake has succeeded or the connection dropped to state RASTA_CONNECTION_CLOSED
     accept_event = eventfd(0, 0);
     fd_event fd_event;
     fd_event.callback = [](void*) { return 1; };
-    fd_event.carry_data = &h;
+    fd_event.carry_data = &rc->h;
     fd_event.fd = accept_event;
     fd_event.enabled = 0;
 
     enable_fd_event(&fd_event);
-    sr_begin(h, &fd_event, 1, h->config.values.general.rasta_id < channel->remote_id);
+    add_fd_event(&rc->rasta_lib_event_system, &fd_event, EV_READABLE);
+    rasta_lib_start(rc, rc->h.config.values.general.rasta_id < channel->remote_id);
 
-    con_id = rastalist_getConnectionId(&h->connections, channel->remote_id);
-    existing_connection = rastalist_getConnection(&h->connections, con_id);
+    existing_connection = NULL;
+    for (struct rasta_connection* con = rc->h.first_con; con; con = con->linkedlist_next) {
+        if (con->remote_id == channel->remote_id) {
+            existing_connection = con;
+            break;
+        }
+    }
 
     if (existing_connection != NULL &&
             (existing_connection->current_state == RASTA_CONNECTION_START
                 || existing_connection->current_state == RASTA_CONNECTION_CLOSED)) {
         // Connection request timeout
         if (existing_connection->current_state == RASTA_CONNECTION_START) {
-            sr_disconnect(h, channel->remote_id);
+            sr_disconnect(&rc->h, existing_connection);
         }
         return false;
     }
@@ -270,26 +282,36 @@ void rastaServer(std::string rasta_channel1_address, std::string rasta_channel1_
     channel.remote_id = s_remote_id = std::stoul(rasta_target_id);
     channel.subchannels = toServer;
 
-    struct rasta_handle h;
-    rasta_listen(&h, "rasta.cfg");
+    rasta_lib_configuration_t rc;
+    rasta_listen(rc, "rasta.cfg");
 
     while (true)
     {
         struct rasta_connection new_connection;
-        if (rasta_accept(&h, &channel, &new_connection)) {
+        if (rasta_accept(rc, &channel, &new_connection)) {
             terminator_fd = eventfd(0, 0);
             fd_event fd_event;
-            fd_event.callback = [](void* h) {
-                sr_disconnect(reinterpret_cast<rasta_handle*>(h), s_remote_id);
+            fd_event.callback = [](void* carry) {
+                rasta_handle *h = reinterpret_cast<rasta_handle*>(carry);
+                struct rasta_connection * existing_connection = NULL;
+                for (struct rasta_connection* con = h->first_con; con; con = con->linkedlist_next) {
+                    if (con->remote_id == s_remote_id) {
+                        existing_connection = con;
+                        break;
+                    }
+                }
+                if (existing_connection != NULL) {
+                    sr_disconnect(h, existing_connection);
+                }
                 return 1;
             };
-            fd_event.carry_data = &h;
+            fd_event.carry_data = &rc->h;
             fd_event.fd = terminator_fd;
             fd_event.enabled = 0;
 
             enable_fd_event(&fd_event);
             std::thread rasta_thread([&]() {
-                sr_begin(&h, &fd_event, 1, 0);
+                rasta_lib_start(rc, false);
                 std::lock_guard<std::mutex> guard(s_busy);
                 if (s_currentContext) {
                     // printf("%s\n", "Canceling...");
@@ -323,7 +345,7 @@ void rastaServer(std::string rasta_channel1_address, std::string rasta_channel1_
                 allocateRastaMessageData(&messageData, 1);
                 messageData.data_array[0] = msg;
 
-                sr_send(&h, s_remote_id, messageData);
+                sr_send(&rc->h, s_remote_id, messageData);
 
                 freeRastaMessageData(&messageData); // Also frees the byte array
             }
@@ -341,7 +363,7 @@ void rastaServer(std::string rasta_channel1_address, std::string rasta_channel1_
         }
     }
 
-    sr_cleanup(&h);
+    sr_cleanup(&rc->h);
 
     // Give the remote the chance to notice the possibly broken connection
     usleep(1000);

@@ -1,5 +1,11 @@
 #ifndef INCLUDE_RASTA_LIB_H
 #define INCLUDE_RASTA_LIB_H
+
+#ifdef __cplusplus
+extern "C" {  // only need to export C interface if
+              // used by C++ source code
+#endif
+
 #include<rasta_new.h>
 #include<rastahandle.h>
 
@@ -38,5 +44,9 @@ typedef timed_event rasta_lib_timed_event;
 void rasta_lib_init_configuration(rasta_lib_configuration_t user_configuration, const char* config_file_path);
 
 void rasta_lib_start(rasta_lib_configuration_t user_configuration, int wait_for_handshake);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
