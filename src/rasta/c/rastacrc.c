@@ -21,7 +21,7 @@ unsigned long reflect (unsigned long crc_in, int n) {
 }
 
 struct crc_options crc_init_opt_a(){
-    struct crc_options options;
+    struct crc_options options = {0};
     options.width = 0;
 
     options.is_table_generated = 0;
@@ -114,7 +114,7 @@ struct crc_options crc_init_opt_e(){
 }
 
 
-void crc_generate_table(struct crc_options * options) {
+void crc_generate_table(struct crc_options* options) {
     // generate table
     unsigned long bit;
 
@@ -141,7 +141,7 @@ void crc_generate_table(struct crc_options * options) {
 
     options->is_table_generated = 1;
 }
-unsigned long crc_calculate (struct crc_options * options, struct RastaByteArray data) {
+unsigned long crc_calculate(struct crc_options* options, struct RastaByteArray data) {
     if (!options->is_table_generated){
         crc_generate_table(options);
     }

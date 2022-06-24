@@ -13,6 +13,7 @@ extern "C" {  // only need to export C interface if
 //TODO: check
 //#include <errno.h>
 #include "rastahandle.h"
+#include "event_system.h"
 
 /**
  * size of ring buffer where data is hold for retransmissions
@@ -80,16 +81,10 @@ typedef enum {
             RASTA_DISC_REASON_PROTOCOLERROR=8
 } rasta_disconnect_reason;
 
-
-
 typedef struct {
     unsigned long id;
     struct RastaByteArray appMessage;
 }rastaApplicationMessage;
-
-
-
-
 
 /**
  * initializes the rasta handle and starts all threads
@@ -137,11 +132,11 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
 rastaApplicationMessage sr_get_received_data(struct rasta_handle *h, struct rasta_connection * connection);
 
 /**
- * closes the connection to the given remote_id
+ * closes the connection to the connection
  * @param h
- * @param remote_id
+ * @param con
  */
-void sr_disconnect(struct rasta_handle *h, unsigned long remote_id);
+void sr_disconnect(struct rasta_handle *h, struct rasta_connection* con);
 
 /**
  * used to end all threads an free assigned ressources
@@ -149,6 +144,8 @@ void sr_disconnect(struct rasta_handle *h, unsigned long remote_id);
  * @param h
  */
 void sr_cleanup(struct rasta_handle *h);
+
+void sr_begin(struct rasta_handle * h, event_system* event_system, int wait_for_handshake);
 
 #ifdef __cplusplus
 }

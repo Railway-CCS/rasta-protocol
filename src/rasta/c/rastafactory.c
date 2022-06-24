@@ -21,7 +21,7 @@ void allocateRastaMessageData(struct RastaMessageData* data, unsigned int count)
 
 
 void freeRastaMessageData(struct RastaMessageData* data) {
-    for (int i = 0; i < data->count; i++) {
+    for (unsigned int i = 0; i < data->count; i++) {
         freeRastaByteArray(&data->data_array[i]);
     }
     data->count = 0;
@@ -219,7 +219,7 @@ struct RastaPacket createDataMessage(uint32_t receiver_id, uint32_t sender_id, u
 
     unsigned int message_length = 0;
 
-    for (int i = 0; i < data.count; i++) {
+    for (unsigned int i = 0; i < data.count; i++) {
         message_length += data.data_array[i].length;
     }
 
@@ -231,18 +231,16 @@ struct RastaPacket createDataMessage(uint32_t receiver_id, uint32_t sender_id, u
 
     message_length = 0;
 
-    for (int i = 0; i < data.count; i++) {
+    for (unsigned int i = 0; i < data.count; i++) {
 
         hostShortTole((unsigned short)data.data_array[i].length, &p.data.bytes[0+message_length]);
 
-        for (int j = 0; j < data.data_array[i].length; j++) {
+        for (unsigned int j = 0; j < data.data_array[i].length; j++) {
             p.data.bytes[2+message_length+j] = data.data_array[i].bytes[j];
         }
 
         message_length += data.data_array[i].length + 2;
     }
-
-
 
     return p;
 
@@ -267,7 +265,7 @@ struct RastaMessageData extractMessageData(struct RastaPacket p) {
 
     current_length = 0;
 
-    for(int i = 0; i < result.count; i++) {
+    for(unsigned int i = 0; i < result.count; i++) {
         const uint16_t length = leShortToHost(&p.data.bytes[0+current_length]);
 
         allocateRastaByteArray(&result.data_array[i],length);

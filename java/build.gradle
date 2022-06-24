@@ -1,0 +1,211 @@
+apply plugin: 'c'
+apply plugin: 'cunit-test-suite'
+
+
+model {
+    buildTypes {
+        release
+        // debug
+    }
+
+    binaries{
+
+        all{
+            linker.args "-lrt"
+        }
+    }
+
+    repositories {
+        libs(PrebuiltLibraries) {
+            cunit {
+                headers.srcDir "/usr/include/CUnit"
+                binaries.withType(StaticLibraryBinary) {
+                    staticLibraryFile = file("/usr/lib/x86_64-linux-gnu/libcunit.a")
+                }
+            }
+        }
+    }
+
+    components {
+        // libs
+        rasta(NativeLibrarySpec)
+
+        sci(NativeLibrarySpec){
+            sources.c{
+                lib library: "rasta", linkage: "shared"
+            }
+        }
+        rastawrapper(NativeLibrarySpec){
+                    sources.c{
+                        lib library: "rasta", linkage: "shared"
+                    }
+             }
+
+        // execs
+       tests_manual(NativeExecutableSpec){
+            sources.c{
+                lib library: "rasta", linkage: "static"
+            }
+       }
+
+       rasta_example(NativeExecutableSpec){
+           sources.c{
+               lib library: "rasta", linkage: "static"
+           }
+       }
+       com_with_java(NativeExecutableSpec){
+                  sources.c{
+                      lib library: "rasta", linkage: "static"
+                  }
+              }
+       logging_example(NativeExecutableSpec){
+          sources.c{
+              lib library: "rasta", linkage: "static"
+          }
+       }
+
+       testRetransmission(NativeExecutableSpec){
+           sources.c{
+               lib library: "rasta", linkage: "static"
+           }
+       }
+       redundancy_test(NativeExecutableSpec){
+                 sources.c{
+                     lib library: "rasta", linkage: "static"
+                 }
+       }
+       mux_stresstest(NativeExecutableSpec){
+                sources.c{
+                    lib library: "rasta", linkage: "static"
+                }
+       }
+       rasta_example_new(NativeExecutableSpec){
+                  sources.c{
+                      lib library: "rasta", linkage: "static"
+                  }
+              }
+       wrapperTestClient(NativeExecutableSpec){
+                     sources.c{
+                         lib library: "rasta", linkage: "static"
+                     }
+                 }
+       scip_example(NativeExecutableSpec){
+                    sources.c{
+                        lib library: "rasta", linkage: "static"
+                        lib library: "sci", linkage: "static"
+                    }
+                }
+       scils_example(NativeExecutableSpec){
+                    sources.c{
+                        lib library: "rasta", linkage: "static"
+                        lib library: "sci", linkage: "static"
+                    }
+                }
+       sciJavaCom(NativeExecutableSpec){
+                   sources.c{
+                       lib library: "rasta", linkage: "static"
+                       lib library: "sci", linkage: "static"
+                   }
+               }
+    }
+
+    testSuites {
+        rastaTest(CUnitTestSuiteSpec) {
+            sources.c {
+                lib library: "rasta", linkage: "static"
+                lib library: "cunit", linkage: "static"
+            }
+            testing $.components.rasta
+        }
+        sciTest(CUnitTestSuiteSpec) {
+            sources.c {
+                lib library: "sci", linkage: "static"
+                lib library: "rasta", linkage: "static"
+                lib library: "cunit", linkage: "static"
+            }
+            testing $.components.sci
+        }
+    }
+
+    binaries {
+        // CUnit
+        withType(CUnitTestSuiteBinarySpec) {
+            lib library: "cunit", linkage: "static"
+        }
+
+        all {
+            // // Debugging
+            // if (buildType == buildTypes.debug) {
+            //     cCompiler.args "-g"
+            // }
+            cCompiler.args "-Wall", "-fprofile-arcs", "-ftest-coverage", "-I/usr/lib/jvm/java-8-oracle/include", "-I/usr/lib/jvm/java-8-oracle/include/linux/"
+            linker.args "-lgcov", "--coverage"
+        }
+    }
+     
+}
+
+/**
+    static analysis task
+*/
+task staticAnalysis() {
+    doLast {
+        exec {
+            executable "cppcheck"
+            args "--enable=performance,information", "src/rasta/c", "src/rastaTest/c", "src/scip/c", "src/scipTest/c", "-I", "src/rasta/headers", "src/rastaTest/headers", "src/scip/headers", "src/scipTest/headers"
+        }
+    }
+}
+
+/**
+    memory leak analysis
+*/
+task valgrindAnalysis(dependsOn: build) {
+    doLast {
+        exec {
+            executable "valgrind"
+            args  "--leak-check=full", "--show-leak-kinds=all", "./build/exe/rastaTest/rastaTest"
+        }
+    }
+}
+
+/**
+    generate the documentation using Doxygen
+*/
+task genDoc() {
+    doLast {
+        exec {
+            executable "doxygen"
+            args "Doxyfile"
+        }
+    }
+}
+
+/**
+    code coverage preprocessing
+
+    hint: not for manual usage! use task genCCHtml instead
+*/
+task codeCoveragePreProcessing() {
+    doLast {
+        exec {
+            executable "lcov"
+            //args ".", "-name", "*.gcno", "-exec", "gcov", "{}", ";"
+            args "--directory", ".", "--capture", "--output-file", "app.info"
+        }
+    }
+}
+/**
+    generating HTML files from preprocessed code covergae data
+*/
+task genCCHtml(dependsOn: codeCoveragePreProcessing) {
+    doLast {
+        exec {
+            executable "genhtml"
+            args "app.info", "-o", "ccHTML"
+        }
+    }
+}
+
+// run static analysis before build
+//build.dependsOn staticAnalysis

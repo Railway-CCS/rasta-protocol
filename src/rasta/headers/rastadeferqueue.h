@@ -12,7 +12,6 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
-#include <pthread.h>
 #include "rastamodule.h"
 
 /**
@@ -42,11 +41,6 @@ struct defer_queue{
      * maximum number of elements in the queue
      */
     unsigned int max_count;
-
-    /**
-     * the mutex that is used to make the queue operation atomically when multiple threads are trying to access it
-     */
-    pthread_mutex_t mutex;
 };
 
 /**

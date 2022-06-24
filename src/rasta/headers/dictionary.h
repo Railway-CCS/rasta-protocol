@@ -50,7 +50,7 @@ union DictionaryValue {
  */
 struct DictionaryEntry {
     dic_entry_type type;
-    char key[265];
+    char key[256];
     union DictionaryValue value;
 };
 
@@ -101,7 +101,7 @@ void dictionary_free(struct Dictionary* dict);
  * @param key
  * @return 1 if its in the dicitonary else 0
  */
-int dictionary_isin(struct Dictionary* dict, const char key[265]);
+int dictionary_isin(struct Dictionary* dict, const char* key);
 
 /**
  * adds a number to the dictionary
@@ -110,7 +110,7 @@ int dictionary_isin(struct Dictionary* dict, const char key[265]);
  * @param number
  * @return 1 if successfully added, 0 else
  */
-int dictionary_addNumber(struct Dictionary* dict, const char key[265], int number);
+int dictionary_addNumber(struct Dictionary* dict, const char * key, int number);
 
 /**
  * adds a string to the dictionary
@@ -119,7 +119,7 @@ int dictionary_addNumber(struct Dictionary* dict, const char key[265], int numbe
  * @param string
  * @return 1 if successfully added, 0 else
  */
-int dictionary_addString(struct Dictionary* dict, const char key[265], struct DictionaryString string);
+int dictionary_addString(struct Dictionary* dict, const char * key, struct DictionaryString string);
 
 /**
  * adds an array to the dictionary
@@ -128,7 +128,7 @@ int dictionary_addString(struct Dictionary* dict, const char key[265], struct Di
  * @param array
  * @return 1 if successfully added, 0 else
  */
-int dictionary_addArray(struct Dictionary* dict, const char key[265], struct DictionaryArray array);
+int dictionary_addArray(struct Dictionary* dict, const char * key, struct DictionaryArray array);
 
 /**
  * returns an dictionary entry associated with the key, if the key is not in the dictionary, the type is set to DICTIONARY_ERROR
@@ -137,7 +137,7 @@ int dictionary_addArray(struct Dictionary* dict, const char key[265], struct Dic
  * @param key
  * @return
  */
-struct DictionaryEntry dictionary_get(struct Dictionary* dict, const char key[265]);
+struct DictionaryEntry dictionary_get(struct Dictionary* dict, const char* key);
 
 
 #ifdef __cplusplus

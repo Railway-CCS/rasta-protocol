@@ -55,7 +55,7 @@ void udp_bind_device(int file_descriptor, uint16_t port, char * ip) {
     if( bind(file_descriptor , (struct sockaddr*)&local, sizeof(struct sockaddr_in) ) == -1)
     {
         // bind failed
-        perror("could not bind the socket to port" + port);
+        perror("could not bind the socket to port");
         exit(1);
     }
 }

@@ -11,8 +11,6 @@ extern "C" {  // only need to export C interface if
 #endif
 
 #include <mqueue.h>
-#include <pthread.h>
-#include "rastalist.h"
 #include <rastahashing.h>
 //TODO: check
 //#include <stdint.h>
@@ -21,7 +19,247 @@ extern "C" {  // only need to export C interface if
 #include "config.h"
 #include "rasta_red_multiplexer.h"
 
-struct rasta_notification_result;
+
+typedef enum {
+    RASTA_ROLE_CLIENT = 0,
+    RASTA_ROLE_SERVER = 1
+} rasta_role;
+
+/**
+ * representation of the connection state in the SR layer
+ */
+typedef enum {
+    /**
+     * The connection is closed
+     */
+            RASTA_CONNECTION_CLOSED,
+    /**
+     * OpenConnection was called, the connection is ready to be established
+     */
+            RASTA_CONNECTION_DOWN,
+    /**
+     * In case the role is client: a ConReq was sent, waiting for ConResp
+     * In case the role is server: a ConResp was sent, waiting for HB
+     */
+            RASTA_CONNECTION_START,
+    /**
+     * The connection was established, ready to send data
+     */
+            RASTA_CONNECTION_UP,
+    /**
+     * Retransmission requested
+     * RetrReq was sent, waiting for RetrResp
+     */
+            RASTA_CONNECTION_RETRREQ,
+    /**
+     * Retransmission running
+     * After receiving the RetrResp, resend data will be accepted until HB or regular data arrives
+     */
+            RASTA_CONNECTION_RETRRUN
+} rasta_sr_state;
+
+/**
+* representation of the RaSTA error counters, as specified in 5.5.5
+*/
+struct rasta_error_counters{
+    /**
+     * received message with faulty checksum
+     */
+    unsigned int safety;
+
+    /**
+     * received message with unreasonable sender/receiver
+     */
+    unsigned int address;
+
+    /**
+     * received message with undefined type
+     */
+    unsigned int type;
+
+    /**
+     * received message with unreasonable sequence number
+     */
+    unsigned int sn;
+
+    /**
+     * received message with unreasonable confirmed sequence number
+     */
+    unsigned int cs;
+};
+
+/**
+ * Representation of a sub interval defined in 5.5.6.4 and used to diagnose healthiness of a connection
+ */
+struct diagnostic_interval {
+    /**
+     * represents the start point of this interval.
+     * an interval lies between 0 to T_MAX
+     */
+    unsigned int interval_start;
+    /**
+     * represents the end point for this interval
+     * an interval lies between 0 to T_MAX
+     */
+    unsigned int interval_end;
+
+    /**
+     * counts successful reached messages that lies between current interval_start and interval_end
+     */
+    unsigned int message_count;
+    /**
+     * counts every message assigned to this interval that's T_ALIVE value lies between this interval, too
+     */
+    unsigned int t_alive_message_count;
+};
+
+/**
+ * The data that is passed to most timed events.
+ */
+struct timed_event_data {
+    void* handle;
+    struct rasta_connection* connection;
+};
+
+struct rasta_connection {
+
+    struct rasta_connection* linkedlist_next;
+    struct rasta_connection* linkedlist_prev;
+
+    /**
+     * the event operating the heartbeats on this connection
+     */
+    timed_event send_heartbeat_event;
+    struct timed_event_data heartbeat_carry_data;
+
+    /**
+     * the event watching the connection timeout
+     */
+    timed_event timeout_event;
+    struct timed_event_data timeout_carry_data;
+
+    /**
+     * 1 if the process for sending heartbeats should be paused, otherwise 0
+     */
+    int hb_stopped;
+
+    /**
+     * bool value if data from the send buffer is sent right now
+     */
+    int is_sending;
+
+    /**
+     * blocks heartbeats until connection handshake is complete
+     */
+    int hb_locked;
+
+    rasta_sr_state current_state;
+
+    /**
+     * the name of the receiving message queue
+     */
+    fifo_t * fifo_app_msg;
+
+    /**
+     * the name of the sending message queue
+     */
+    fifo_t * fifo_send;
+
+    /**
+     * the N_SENDMAX of the connection partner,  -1 if not connected
+     */
+    int connected_recv_buffer_size;
+
+    /**
+     * defines if who started the connection
+     * Client: Connection request sent
+     * Server: Connection request received
+     */
+    rasta_role role;
+
+    /**
+     * send sequence number (seq nr of the next PDU that will be sent)
+     */
+    uint32_t sn_t;
+    /**
+     * receive sequence number (expected seq nr of the next received PDU)
+     */
+    uint32_t sn_r;
+    /**
+     * sequence number that has to be checked in the next sent PDU
+     */
+    uint32_t cs_t;
+    /**
+     * last received, checked sequence number
+     */
+    uint32_t cs_r;
+
+    /**
+     * timestamp of the last received relevant message
+     */
+    uint32_t ts_r;
+    /**
+     * checked timestamp of the last received relevant message
+     */
+    uint32_t cts_r;
+
+    /**
+     * relative time used to monitor incoming messages
+     */
+    unsigned int t_i;
+
+    /**
+     * the RaSTA connections sender identifier
+     */
+    uint32_t my_id;
+    /**
+     * the RaSTA connections receiver identifier
+     */
+    uint32_t remote_id;
+    /**
+     * the identifier of the RaSTA network this connection belongs to
+     */
+    uint32_t network_id;
+
+    /**
+     * counts received diagnostic relevant messages since last diagnosticNotification
+     */
+    unsigned int received_diagnostic_message_count;
+    /**
+     * length of diagnostic_intervals array
+     */
+    unsigned int diagnostic_intervals_length;
+    /**
+     * diagnostic intervals defined at 5.5.6.4 to diagnose healthiness of this connection
+     * number of fields defined by DIAGNOSTIC_INTERVAL_SIZE
+     */
+    struct diagnostic_interval* diagnostic_intervals;
+
+    /**
+     * the pdu fifo for retransmission purposes
+     */
+    fifo_t * fifo_retr;
+
+    /**
+    *   the error counters as specified in 5.5.5
+    */
+    struct rasta_error_counters errors;
+};
+
+/**
+ * struct that is returned in all notifications
+ */
+struct rasta_notification_result {
+    /**
+     * copy of the calling rasta connection (this should always be used first)
+     */
+    struct rasta_connection connection;
+
+    /**
+     * handle, don't touch
+     */
+    struct rasta_handle *handle;
+};
 
 /**
  * pointer to a function that will be called when application messages are ready for processing
@@ -103,22 +341,6 @@ struct rasta_notification_ptr{
     on_heartbeat_timeout_ptr on_heartbeat_timeout;
 };
 
-
-/**
- * struct that is returned in all notifications
- */
-struct rasta_notification_result {
-    /**
-     * copy of the calling rasta connection (this should always be used first)
-     */
-    struct rasta_connection connection;
-
-    /**
-     * handle, don't touch
-     */
-    struct rasta_handle *handle;
-};
-
 struct rasta_disconnect_notification_result {
     struct rasta_notification_result result;
     unsigned short reason;
@@ -143,14 +365,7 @@ struct rasta_sending_handle {
      */
     struct rasta_handle * handle;
 
-    /**
-     * pointer to the connections
-     */
-    struct RastaList *connections;
-
     int *running;
-
-    pthread_t send_thread;
 
     /**
      * The paramenters that are used for SR checksums
@@ -174,14 +389,7 @@ struct rasta_heartbeat_handle {
      */
     struct rasta_handle * handle;
 
-    /**
-     * pointer to the connections
-     */
-    struct RastaList *connections;
-
     int *running;
-
-    pthread_t hb_thread;
 
     /**
      * The paramenters that are used for SR checksums
@@ -204,16 +412,9 @@ struct rasta_receive_handle {
     /**
      * handle for notification only
      */
-    struct rasta_handle * handle;
+    struct rasta_handle* handle;
 
-    /**
-     * pointer to the connections
-     */
-    struct RastaList *connections;
-
-    int *running;
-
-    pthread_t recv_thread;
+    int* running;
 
     /**
      * The paramenters that are used for SR checksums
@@ -224,19 +425,19 @@ struct rasta_receive_handle {
 
 struct rasta_handle {
     /**
-    * the receiving thread
+    * the receiving data
     */
     struct rasta_receive_handle *receive_handle;
     int recv_running;
 
     /**
-     * the sending thread
+     * the sending data
      */
     struct rasta_sending_handle *send_handle;
     int send_running;
 
     /**
-     * the heartbeat thread
+     * the heartbeat data
      */
     struct rasta_heartbeat_handle *heartbeat_handle;
     int hb_running;
@@ -245,13 +446,6 @@ struct rasta_handle {
     * pointers to functions that will be called on notifications as described in 5.2.2 and 5.5.6.4
     */
     struct rasta_notification_ptr notifications;
-
-    /**
-     *
-     */
-    int running_notifications;
-
-    pthread_mutex_t notification_lock;
 
     /**
     * the logger which is used to log protocol activities
@@ -278,14 +472,25 @@ struct rasta_handle {
     struct redundancy_mux mux;
 
     /**
-     * array of rasta conenctions
+     * linked list of rasta connections
      */
-    struct RastaList connections;
+    struct rasta_connection* first_con;
+    struct rasta_connection* last_con;
 
     /**
      * The paramenters that are used for SR checksums
      */
     rasta_hashing_context_t hashing_context;
+
+    /**
+     * the global event system on the main threat
+     */
+    event_system* ev_sys;
+
+    /**
+     * the user specified configurations for RaSTA
+     */
+    struct user_callbacks* user_handles;
 };
 /**
  * creates the container for all notification events
@@ -330,7 +535,7 @@ void fire_on_handshake_complete(struct rasta_notification_result result);
  * fires the onHeartbeatTimeout event set in the rasta handle
  * @param result
  */
-void fire_on_hearbeat_timeout(struct rasta_notification_result result);
+void fire_on_heartbeat_timeout(struct rasta_notification_result result);
 
 /**
  * initializes the rasta handle

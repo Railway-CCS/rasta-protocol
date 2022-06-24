@@ -12,6 +12,7 @@ build
 ubuntu-xenial*
 \.idea/
 cmake-build-debug/
+Testing/
 
 ccHTML
 app.info
@@ -22,3 +23,11 @@ assets/usr
 
 # exclude documentation files
 doc/
+
+.cmake
+Makefile
+*cmake*
+*CMake*
+*/bin/*
+test/
+*.tcl

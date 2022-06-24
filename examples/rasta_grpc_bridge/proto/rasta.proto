@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+option go_package = "github.com/deislabs/akri/rasta-extensibility/proto";
+
+package sci;
+
+service Rasta {
+    rpc Stream(stream SciPacket) returns (stream SciPacket) {}
+}
+
+message SciPacket {
+    bytes message = 1;
+}
