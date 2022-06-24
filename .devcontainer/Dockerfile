@@ -21,7 +21,7 @@ RUN if [ "${REINSTALL_CMAKE_VERSION_FROM_SOURCE}" != "none" ]; then \
 # [Optional] Uncomment this section to install additional packages.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
-    && build-essential autoconf libtool pkg-config \
+    build-essential autoconf libtool pkg-config \
         libcunit1 libcunit1-doc libcunit1-dev
 
 RUN cd /tmp \
