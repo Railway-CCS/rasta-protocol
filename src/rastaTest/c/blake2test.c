@@ -1,7 +1,11 @@
 #include "../headers/blake2test.h"
 #include <rastablake2.h>
+
+#include <stdlib.h>
 #include <CUnit/Basic.h>
 #include <rmemory.h>
+
+int blake2b_selftest();
 
 unsigned char* hexstr_to_char(const char* hexstr)
 {
@@ -13,8 +17,6 @@ unsigned char* hexstr_to_char(const char* hexstr)
     chrs[final_len] = '\0';
     return chrs;
 }
-
-
 
 void testBlake2Hash(){
     // assure that blake itself is working correctly
