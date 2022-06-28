@@ -101,15 +101,15 @@ void deferqueue_remove(struct defer_queue * queue, unsigned long seq_nr){
         return;
     }
 
+    // free element with sequence number seq_nr
+    freeRastaByteArray(&queue->elements[index].packet.data.data);
+
     if(index != (queue->count - 1)){
         // element to delete isn't at the last position
         // to be able to add the next element to the last position without overriding something
-        // the currently last element is moved to the index where the element to delete is located
+        // the currently last element is moved to the index where the deleted element is located
         queue->elements[index] = queue->elements[queue->count-1];
     }
-
-    // free last element
-    freeRastaByteArray(&queue->elements[queue->count -1].packet.data.data);
 
     // decrease counter
     queue->count = queue->count -1;
