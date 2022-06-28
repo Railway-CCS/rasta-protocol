@@ -6,6 +6,7 @@
 #include "../headers/configtest.h"
 #include <CUnit/Basic.h>
 #include "config.h"
+#include <rmemory.h>
 #include <string.h>
 
 void check_std_config() {
@@ -46,7 +47,7 @@ void check_std_config() {
     CU_ASSERT_EQUAL(cfg.values.general.rasta_network,0);
     CU_ASSERT_EQUAL(cfg.values.general.rasta_id,0);
 
-
+    config_free(&cfg);
 }
 
 void check_var_config() {
@@ -139,5 +140,5 @@ void check_var_config() {
     CU_ASSERT_EQUAL(entr.type, DICTIONARY_NUMBER);
     CU_ASSERT_EQUAL(entr.value.number, 0xff32);
 
-
+    config_free(&cfg);
 }

@@ -74,7 +74,7 @@ unsigned int fifo_get_size(fifo_t * fifo){
 }
 
 void fifo_destroy(fifo_t * fifo){
-    for (int i = 0; i < fifo->size; ++i) {
+    while (fifo->size != 0) {
         fifo_pop(fifo);
     }
 

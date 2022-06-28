@@ -326,6 +326,8 @@ struct RastaByteArray rastaRedundancyPacketToBytes(struct RastaRedundancyPacket 
         result.bytes[8+i] = internal_packet_bytes.bytes[i];
     }
 
+    freeRastaByteArray(&internal_packet_bytes);
+
     // initialize a byte array containing all data except checksum
     // this is needed, as otherwise the 0s/unset bytes in the result byte array will be used in calculating the checksum
     struct RastaByteArray temp_wo_checksum;

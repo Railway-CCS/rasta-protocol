@@ -36,9 +36,5 @@ void check_rastalist() {
     con = rastalist_getConnection(&list,1);
     CU_ASSERT_EQUAL(con->remote_id, 3);
 
-
-
-
-
-
+    rastalist_free(&list);
 }
