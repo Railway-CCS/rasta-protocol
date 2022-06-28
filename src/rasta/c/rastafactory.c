@@ -60,12 +60,14 @@ struct RastaPacket initializePacket(rasta_conn_type type, uint32_t receiver_id, 
     }
     else {
         result.data.length = 0;
+        result.data.bytes = NULL;
     }
 
     if (hashing_context->hash_length > 0) {
         allocateRastaByteArray(&result.checksum, hashing_context->hash_length * 8);
     } else {
         result.checksum.length = 0;
+        result.checksum.bytes = NULL;
     }
 
     //calculate the length of the packet
