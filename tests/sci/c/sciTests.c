@@ -37,6 +37,7 @@ void testEncode(){
     CU_ASSERT_EQUAL(0, memcmp(expected_telegram, res.bytes, res.length));
 
     rfree(telegram);
+    freeRastaByteArray(&res);
 }
 
 void testDecode(){
@@ -86,7 +87,7 @@ void testDecodeInvalid(){
     rmemcpy(data.bytes, telegram_bytes, 44);
 
     CU_ASSERT_PTR_NULL(sci_decode_telegram(data));
-
+    freeRastaByteArray(&data);
 
     unsigned char telegram_bytes2[] = {
             0x30
@@ -96,6 +97,7 @@ void testDecodeInvalid(){
     rmemcpy(data.bytes, telegram_bytes2, 1);
 
     CU_ASSERT_PTR_NULL(sci_decode_telegram(data));
+    freeRastaByteArray(&data);
 
     unsigned char telegram_bytes3[129] = {0};
     allocateRastaByteArray(&data, 129);
@@ -262,6 +264,8 @@ void testParseVersionRequest(){
     sci_set_message_type(telegram, SCI_MESSAGE_TYPE_VERSION_RESPONSE);
     result = sci_parse_version_request_payload(telegram, &version);
     CU_ASSERT_EQUAL(result, SCI_PARSE_INVALID_MESSAGE_TYPE);
+
+    rfree(telegram);
 }
 
 void testParseVersionResponse(){
@@ -292,4 +296,6 @@ void testParseVersionResponse(){
     sci_set_message_type(telegram, SCI_MESSAGE_TYPE_VERSION_REQUEST);
     result = sci_parse_version_response_payload(telegram, &version, &version_check_result, &len, &checksum[0]);
     CU_ASSERT_EQUAL(result, SCI_PARSE_INVALID_MESSAGE_TYPE);
+
+    rfree(telegram);
 }

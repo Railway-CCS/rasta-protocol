@@ -67,6 +67,7 @@ sci_telegram * sci_decode_telegram(struct RastaByteArray data){
     // check if a valid protocol was provided
     if (!(data.bytes[0] == SCI_PROTOCOL_P || data.bytes[0] == SCI_PROTOCOL_LS)){
         // invalid protocol
+        rfree(telegram);
         return NULL;
     }
 
