@@ -18,6 +18,9 @@ void test_deferqueue_destroy() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 1;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
 
     deferqueue_add(&queue_to_test, packet, 42);
 
@@ -32,10 +35,16 @@ void test_deferqueue_add() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 1;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long packet_ts = 42;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 2;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long packet2_ts = 43;
 
     deferqueue_add(&queue_to_test, packet, packet_ts);
@@ -55,11 +64,17 @@ void test_deferqueue_remove() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 1;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long packet_ts = 42;
 
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 2;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long packet2_ts = 43;
 
     deferqueue_add(&queue_to_test, packet, packet_ts);
@@ -83,10 +98,16 @@ void test_deferqueue_add_full() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 1;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long packet_ts = 42;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 2;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long packet2_ts = 43;
 
     deferqueue_add(&queue_to_test, packet, packet_ts);
@@ -104,10 +125,16 @@ void test_deferqueue_remove_not_in_queue() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 1;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long packet_ts = 42;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 2;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long packet2_ts = 43;
 
     deferqueue_add(&queue_to_test, packet, packet_ts);
@@ -155,9 +182,15 @@ void test_deferqueue_isfull() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 1;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 2;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
 
     deferqueue_add(&queue_to_test, packet, 1);
     deferqueue_add(&queue_to_test, packet2, 2);
@@ -169,6 +202,9 @@ void test_deferqueue_isfull() {
 
     struct RastaRedundancyPacket packet3;
     packet3.sequence_number = 3;
+    struct RastaPacket data3;
+    data3.length = 0;
+    packet3.data = data3;
 
     deferqueue_add(&queue_to_test, packet3, 3);
 
@@ -183,12 +219,21 @@ void test_deferqueue_smallestseqnr() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 3;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 1;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
 
     struct RastaRedundancyPacket packet3;
     packet3.sequence_number = 2;
+    struct RastaPacket data3;
+    data3.length = 0;
+    packet3.data = data3;
 
     deferqueue_add(&queue_to_test, packet, 1);
     deferqueue_add(&queue_to_test, packet2, 2);
@@ -206,12 +251,21 @@ void test_deferqueue_get() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 3;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 1;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
 
     struct RastaRedundancyPacket packet3;
     packet3.sequence_number = 2;
+    struct RastaPacket data3;
+    data3.length = 0;
+    packet3.data = data3;
 
     deferqueue_add(&queue_to_test, packet, 1);
     deferqueue_add(&queue_to_test, packet2, 2);
@@ -232,14 +286,23 @@ void test_deferqueue_sorted() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 3;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long ts_1 = 2;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 1;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long ts_2 = 3;
 
     struct RastaRedundancyPacket packet3;
     packet3.sequence_number = 2;
+    struct RastaPacket data3;
+    data3.length = 0;
+    packet3.data = data3;
     unsigned long ts_3 = 1;
 
     deferqueue_add(&queue_to_test, packet, ts_1);
@@ -264,10 +327,16 @@ void test_deferqueue_clear() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 3;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long ts_1 = 2;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 1;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long ts_2 = 3;
 
     deferqueue_add(&queue_to_test, packet, ts_1);
@@ -285,10 +354,16 @@ void test_deferqueue_get_ts() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 3;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long ts_1 = 2;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 1;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long ts_2 = 3;
 
     deferqueue_add(&queue_to_test, packet, ts_1);
@@ -305,10 +380,16 @@ void test_deferqueue_get_ts_doesnt_contain() {
 
     struct RastaRedundancyPacket packet;
     packet.sequence_number = 3;
+    struct RastaPacket data;
+    data.length = 0;
+    packet.data = data;
     unsigned long ts_1 = 2;
 
     struct RastaRedundancyPacket packet2;
     packet2.sequence_number = 1;
+    struct RastaPacket data2;
+    data2.length = 0;
+    packet2.data = data2;
     unsigned long ts_2 = 3;
 
     deferqueue_add(&queue_to_test, packet, ts_1);
