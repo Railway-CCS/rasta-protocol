@@ -7,6 +7,8 @@ void test_deferqueue_init() {
 
     CU_ASSERT_EQUAL(queue_to_test.max_count, 3);
     CU_ASSERT_EQUAL(queue_to_test.count, 0);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 
@@ -44,6 +46,8 @@ void test_deferqueue_add() {
     CU_ASSERT_EQUAL(queue_to_test.elements[1].packet.sequence_number, 2);
     CU_ASSERT_EQUAL(queue_to_test.elements[0].received_timestamp, packet_ts);
     CU_ASSERT_EQUAL(queue_to_test.elements[1].received_timestamp, packet2_ts);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_remove() {
@@ -70,6 +74,8 @@ void test_deferqueue_remove() {
     deferqueue_remove(&queue_to_test, 2);
 
     CU_ASSERT_EQUAL(queue_to_test.count, 0);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_add_full() {
@@ -89,6 +95,8 @@ void test_deferqueue_add_full() {
     CU_ASSERT_EQUAL(queue_to_test.count, 1);
     CU_ASSERT_EQUAL(queue_to_test.elements[0].packet.sequence_number, 1);
     CU_ASSERT_EQUAL(queue_to_test.elements[0].received_timestamp, packet_ts);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_remove_not_in_queue() {
@@ -112,6 +120,8 @@ void test_deferqueue_remove_not_in_queue() {
     CU_ASSERT_EQUAL(queue_to_test.elements[1].packet.sequence_number, 2);
     CU_ASSERT_EQUAL(queue_to_test.elements[0].received_timestamp, packet_ts);
     CU_ASSERT_EQUAL(queue_to_test.elements[1].received_timestamp, packet2_ts);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_contains() {
@@ -136,6 +146,8 @@ void test_deferqueue_contains() {
 
     res = deferqueue_contains(&queue_to_test, 3);
     CU_ASSERT_EQUAL(res, 0);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_isfull() {
@@ -162,6 +174,8 @@ void test_deferqueue_isfull() {
 
     res = deferqueue_isfull(&queue_to_test);
     CU_ASSERT_EQUAL(res, 1);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_smallestseqnr() {
@@ -183,6 +197,8 @@ void test_deferqueue_smallestseqnr() {
     int res = deferqueue_smallest_seqnr(&queue_to_test);
 
     CU_ASSERT_EQUAL(res, 1);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_get() {
@@ -207,6 +223,8 @@ void test_deferqueue_get() {
     // not in queue, struct should be completely 0s
     res = deferqueue_get(&queue_to_test, 42);
     CU_ASSERT_EQUAL(res.sequence_number, 0);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_sorted() {
@@ -237,6 +255,8 @@ void test_deferqueue_sorted() {
 
     CU_ASSERT_EQUAL(queue_to_test.elements[0].received_timestamp, 2);
     CU_ASSERT_EQUAL(queue_to_test.elements[1].received_timestamp, 3);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_clear() {
@@ -256,6 +276,8 @@ void test_deferqueue_clear() {
     deferqueue_clear(&queue_to_test);
 
     CU_ASSERT_EQUAL(queue_to_test.count, 0);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_get_ts() {
@@ -274,6 +296,8 @@ void test_deferqueue_get_ts() {
 
     CU_ASSERT_EQUAL(deferqueue_get_ts(&queue_to_test, 3), ts_1);
     CU_ASSERT_EQUAL(deferqueue_get_ts(&queue_to_test, 1), ts_2);
+
+    deferqueue_destroy(&queue_to_test);
 }
 
 void test_deferqueue_get_ts_doesnt_contain() {
@@ -291,4 +315,6 @@ void test_deferqueue_get_ts_doesnt_contain() {
     deferqueue_add(&queue_to_test, packet2, ts_2);
 
     CU_ASSERT_EQUAL(deferqueue_get_ts(&queue_to_test, 8), 0);
+
+    deferqueue_destroy(&queue_to_test);
 }

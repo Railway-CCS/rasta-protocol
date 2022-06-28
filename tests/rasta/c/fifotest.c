@@ -48,6 +48,7 @@ void test_push(){
     fifo_destroy(fifo);
     rfree(test_str);
     rfree(struct_elem);
+    freeRastaByteArray(&elem);
 }
 
 void test_pop(){

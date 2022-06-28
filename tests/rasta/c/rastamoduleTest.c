@@ -56,6 +56,8 @@ void testConversion(){
 
         //check if checksum is correct
         CU_ASSERT_EQUAL(s.checksum_correct, 1);
+        freeRastaByteArray(&s.checksum);
+        freeRastaByteArray(&s.data);
 
 
 
@@ -63,16 +65,28 @@ void testConversion(){
         data.bytes[8] = 0x43;
         s = bytesToRastaPacket(data, &context);
 
-        if (i != 0) CU_ASSERT_EQUAL(s.checksum_correct, 0) else CU_ASSERT_EQUAL(s.checksum_correct, 1);
+        if (i != 0)
+            CU_ASSERT_EQUAL(s.checksum_correct, 0)
+        else
+            CU_ASSERT_EQUAL(s.checksum_correct, 1);
+
+        freeRastaByteArray(&s.checksum);
+        freeRastaByteArray(&s.data);
 
 
         //check data failure
         r.length = 2;
-        s = bytesToRastaPacket(rastaModuleToBytes(r, &context), &context);
+        struct RastaByteArray rb = rastaModuleToBytes(r, &context);
+        s = bytesToRastaPacket(rb, &context);
+        freeRastaByteArray(&rb);
 
         CU_ASSERT_EQUAL(getRastamoduleLastError(), RASTA_ERRORS_PACKAGE_LENGTH_INVALID);
+
+        freeRastaByteArray(&data);
+        freeRastaByteArray(&r.data);
     }
 
+    freeRastaByteArray(&context.key);
 
 }
 
@@ -134,6 +148,12 @@ void testRedundancyConversionWithCrcChecksumCorrect() {
 
     //check if internal packet checksum is correct
     CU_ASSERT_EQUAL(convertedFromBytes.data.checksum_correct,1);
+
+    freeRastaByteArray(&r.data);
+    freeRastaByteArray(&context.key);
+    freeRastaByteArray(&convertedFromBytes.data.checksum);
+    freeRastaByteArray(&convertedFromBytes.data.data);
+    freeRastaByteArray(&convertedToBytes);
 }
 
 void testRedundancyConversionWithoutChecksum() {
@@ -192,6 +212,12 @@ void testRedundancyConversionWithoutChecksum() {
 
     //check if internal packet checksum is correct
     CU_ASSERT_EQUAL(convertedFromBytes.data.checksum_correct,1);
+
+    freeRastaByteArray(&r.data);
+    freeRastaByteArray(&context.key);
+    freeRastaByteArray(&convertedFromBytes.data.checksum);
+    freeRastaByteArray(&convertedFromBytes.data.data);
+    freeRastaByteArray(&convertedToBytes);
 }
 
 void testRedundancyConversionIncorrectChecksum() {
@@ -232,5 +258,11 @@ void testRedundancyConversionIncorrectChecksum() {
 
     //check if internal packet checksum is incorrect
     CU_ASSERT_EQUAL(convertedFromBytes.data.checksum_correct,0);
+
+    freeRastaByteArray(&r.data);
+    freeRastaByteArray(&context.key);
+    freeRastaByteArray(&convertedFromBytes.data.checksum);
+    freeRastaByteArray(&convertedFromBytes.data.data);
+    freeRastaByteArray(&convertedToBytes);
 }
 
