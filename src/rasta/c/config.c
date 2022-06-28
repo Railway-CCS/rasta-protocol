@@ -839,5 +839,6 @@ struct DictionaryEntry config_get(struct RastaConfig * cfg, char key[256]) {
 
 void config_free(struct RastaConfig *cfg) {
     dictionary_free(&cfg->dictionary);
+    logger_destroy(&cfg->logger);
     if (cfg->values.redundancy.connections.count > 0) rfree(cfg->values.redundancy.connections.data);
 }
