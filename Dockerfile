@@ -4,10 +4,11 @@ RUN apk update && apk add --no-cache cmake gcc make musl-dev linux-headers
 # copy source and build files to container
 COPY src/rasta /opt/rasta-c/src/rasta
 COPY src/sci /opt/rasta-c/src/sci
-COPY src/rasta_example_new /opt/rasta-c/src/rasta_example_new
-COPY src/scils_example /opt/rasta-c/src/scils_example
-COPY src/scip_example /opt/rasta-c/src/scip_example
-COPY src/examples_localhost /opt/rasta-c/src/examples_localhost
+COPY examples/rasta /opt/rasta-c/examples/rasta
+COPY examples/scils /opt/rasta-c/examples/scils
+COPY examples/scip /opt/rasta-c/examples/scip
+COPY examples/localhost /opt/rasta-c/examples/localhost
+COPY examples/CMakeLists.txt /opt/rasta-c/examples
 COPY ./CMakeLists.txt /opt/rasta-c
 
 # copy config files

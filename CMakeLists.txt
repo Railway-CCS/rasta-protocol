@@ -48,7 +48,7 @@ include_directories(
         src/rasta/headers
         src/sci/headers)
 
-set(EXECUTABLE_OUTPUT_PATH bin/exe/examples)
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin/exe/examples)
 set(LIBRARY_OUTPUT_PATH bin/lib)
 
 # RaSTA headers
@@ -178,104 +178,7 @@ if(BUILD_DOCUMENTATION)
     endif(DOXYGEN_FOUND)
 endif(BUILD_DOCUMENTATION)
 
+add_subdirectory(examples)
 if(BUILD_TESTING)
-    include(FindPkgConfig)
-    if(PKG_CONFIG_FOUND)
-        pkg_check_modules(CUnit IMPORTED_TARGET cunit)
-    endif(PKG_CONFIG_FOUND)
-
-    add_executable(rastaTest
-        src/rastaTest/headers/blake2test.h
-        src/rastaTest/headers/configtest.h
-        src/rastaTest/headers/dictionarytest.h
-        src/rastaTest/headers/fifotest.h
-        src/rastaTest/headers/rastacrcTest.h
-        src/rastaTest/headers/rastadeferqueueTest.h
-        src/rastaTest/headers/rastafactoryTest.h
-        src/rastaTest/headers/rastalisttest.h
-        src/rastaTest/headers/rastamd4Test.h
-        src/rastaTest/headers/rastamoduleTest.h
-        src/rastaTest/headers/siphash24test.h
-        src/rastaTest/c/blake2test.c
-        src/rastaTest/c/configtest.c
-        src/rastaTest/c/dictionarytest.c
-        src/rastaTest/c/fifotest.c
-        src/rastaTest/c/rastacrcTest.c
-        src/rastaTest/c/rastadeferqueueTest.c
-        src/rastaTest/c/rastafactoryTest.c
-        src/rastaTest/c/rastalisttest.c
-        src/rastaTest/c/rastamd4Test.c
-        src/rastaTest/c/rastamoduleTest.c
-        src/rastaTest/c/registerTests.c
-        src/rastaTest/c/siphash24test.c)
-    target_include_directories(rastaTest PRIVATE src/rastaTest/headers)
-    target_link_libraries(rastaTest rasta PkgConfig::CUnit)
-
-    add_test(NAME test_rastaTest
-             COMMAND rastaTest)
-
-    add_executable(sciTest
-        src/sciTest/headers/scilsTests.h
-        src/sciTest/headers/scipTests.h
-        src/sciTest/headers/sciTests.h
-        src/sciTest/c/registerTests.c
-        src/sciTest/c/scilsTests.c
-        src/sciTest/c/scipTests.c
-        src/sciTest/c/sciTests.c)
-    target_include_directories(sciTest PRIVATE src/sciTest/headers)
-    target_link_libraries(sciTest rasta PkgConfig::CUnit)
-
-    add_test(NAME test_sciTest
-             COMMAND sciTest)
+    add_subdirectory(tests)
 endif(BUILD_TESTING)
-
-if(BUILD_LOCAL_EXAMPLES)
-	# scip_example on localhost
-	add_executable(scip_example_local
-		    src/examples_localhost/c/scip.c)
-	target_link_libraries(scip_example_local rasta)
-
-
-	# scils_example on localhost
-	add_executable(scils_example_local
-		    src/examples_localhost/c/scils.c)
-	target_link_libraries(scils_example_local rasta)
-
-	# rasta_example_new on localhost
-	add_executable(rasta_example_local
-		    src/examples_localhost/c/rasta.c)
-	target_link_libraries(rasta_example_local rasta)
-	
-	# Copy RaSTA configs to build directory
-	configure_file(config/rasta_server_local.cfg rasta_server_local.cfg COPYONLY)
-	configure_file(config/rasta_client1_local.cfg rasta_client1_local.cfg COPYONLY)
-	configure_file(config/rasta_client2_local.cfg rasta_client2_local.cfg COPYONLY)
-endif(BUILD_LOCAL_EXAMPLES)
-
-if(BUILD_REMOTE_EXAMPLES)
-	# scip_example
-	add_executable(scip_example
-		    src/scip_example/c/main.c)
-	target_link_libraries(scip_example rasta)
-
-
-	# scils_example
-	add_executable(scils_example
-		    src/scils_example/c/main.c)
-	target_link_libraries(scils_example rasta)
-
-	# rasta_example_new
-	add_executable(rasta_example
-		    src/rasta_example_new/c/main.c)
-	target_link_libraries(rasta_example rasta)
-	
-	# Copy RaSTA configs to build directory
-	configure_file(config/rasta_server.cfg rasta_server.cfg COPYONLY)
-	configure_file(config/rasta_client1.cfg rasta_client1.cfg COPYONLY)
-	configure_file(config/rasta_client2.cfg rasta_client2.cfg COPYONLY)
-
-	if (EXAMPLE_IP_OVERRIDE)
-		add_compile_definitions(EXAMPLE_IP_OVERRIDE)
-	endif(EXAMPLE_IP_OVERRIDE)
-endif(BUILD_REMOTE_EXAMPLES)
-
