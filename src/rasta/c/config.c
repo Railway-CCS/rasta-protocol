@@ -460,7 +460,7 @@ struct RastaIPData extractIPData(char data[256], int arrayIndex) {
 }
 
 /**
- * sets the standart values in config
+ * sets the standard values in config
  * @param cfg
  */
 void config_setstd(struct RastaConfig * cfg) {
@@ -826,7 +826,7 @@ struct RastaConfig config_load(const char filename[256]) {
 
     fclose(f);
 
-    //initialize standart value
+    //initialize standard value
     config_setstd(&config);
 
     return config;

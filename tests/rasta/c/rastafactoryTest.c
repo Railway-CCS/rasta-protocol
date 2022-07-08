@@ -18,7 +18,7 @@ void checkConnectionPacket() {
         
         struct RastaPacket r = createConnectionRequest(1, 2, 3, 5, 7, ver, &context);
 
-        //check standart values
+        //check standard values
         CU_ASSERT_EQUAL(r.length, 42 + context.hash_length * 8);
         CU_ASSERT_EQUAL(r.receiver_id, 1);
         CU_ASSERT_EQUAL(r.sender_id, 2);
@@ -41,7 +41,7 @@ void checkConnectionPacket() {
 
         r = createConnectionResponse(1,2,3,4,5,6,7,ver, &context);
 
-        //check standart values
+        //check standard values
         CU_ASSERT_EQUAL(r.length, 42 + context.hash_length * 8);
         CU_ASSERT_EQUAL(r.receiver_id, 1);
         CU_ASSERT_EQUAL(r.sender_id, 2);
@@ -81,7 +81,7 @@ void checkNormalPacket() {
         hashing_context.hash_length = sum;
 
         r = createRetransmissionRequest(1,2,3,4,5,6, &hashing_context);
-        //check standart values
+        //check standard values
         CU_ASSERT_EQUAL(r.length, 28 + hashing_context.hash_length * 8);
         CU_ASSERT_EQUAL(r.receiver_id, 1);
         CU_ASSERT_EQUAL(r.sender_id, 2);
@@ -94,7 +94,7 @@ void checkNormalPacket() {
         freeRastaByteArray(&r.checksum);
 
         r = createRetransmissionResponse(1,2,3,4,5,6, &hashing_context);
-        //check standart values
+        //check standard values
         CU_ASSERT_EQUAL(r.length, 28 + hashing_context.hash_length * 8);
         CU_ASSERT_EQUAL(r.receiver_id, 1);
         CU_ASSERT_EQUAL(r.sender_id, 2);
@@ -107,7 +107,7 @@ void checkNormalPacket() {
         freeRastaByteArray(&r.checksum);
 
         r = createHeartbeat(1,2,3,4,5,6, &hashing_context);
-        //check standart values
+        //check standard values
         CU_ASSERT_EQUAL(r.length, 28 + hashing_context.hash_length * 8);
         CU_ASSERT_EQUAL(r.receiver_id, 1);
         CU_ASSERT_EQUAL(r.sender_id, 2);
@@ -194,7 +194,7 @@ void checkMessagePacket() {
         hashing_context.hash_length = sum;
         //check normal message data
         r = createDataMessage(1,2,3,4,5,6,data, &hashing_context);
-        //check standart values
+        //check standard values
         CU_ASSERT_EQUAL(r.length, 28 + hashing_context.hash_length * 8 + message_length);
         CU_ASSERT_EQUAL(r.receiver_id, 1);
         CU_ASSERT_EQUAL(r.sender_id, 2);
@@ -222,7 +222,7 @@ void checkMessagePacket() {
 
         //check retransmitted message data
         r = createRetransmittedDataMessage(1,2,3,4,5,6,data, &hashing_context);
-        //check standart values
+        //check standard values
         CU_ASSERT_EQUAL(r.length, 28 + hashing_context.hash_length * 8 + message_length);
         CU_ASSERT_EQUAL(r.receiver_id, 1);
         CU_ASSERT_EQUAL(r.sender_id, 2);
