@@ -10,12 +10,12 @@
  * @return -1 if there is no element with the specified @p seq_nr, index of the element otherwise
  */
 int find_index(struct defer_queue * queue, unsigned long seq_nr){
-    int index = 0;
+    unsigned int index = 0;
 
     // naive implementation of search. performance shouldn't be an issue as the amount of messages in the queue is small
     while ( index < queue->max_count && queue->elements[index].packet.sequence_number != seq_nr ) ++index;
 
-    return ( index == queue->max_count ? -1 : index );
+    return ( index == queue->max_count ? -1 : (int)index );
 }
 
 int cmpfkt(const void * a, const void * b){
@@ -104,7 +104,7 @@ void deferqueue_remove(struct defer_queue * queue, unsigned long seq_nr){
     // free element with sequence number seq_nr
     freeRastaByteArray(&queue->elements[index].packet.data.data);
 
-    if(index != (queue->count - 1)){
+    if(index != ((int)queue->count - 1)){
         // element to delete isn't at the last position
         // to be able to add the next element to the last position without overriding something
         // the currently last element is moved to the index where the deleted element is located
@@ -152,7 +152,7 @@ int deferqueue_smallest_seqnr(struct defer_queue * queue){
     unsigned long smallest = 0xFFFFFFFF;
 
     // naive implementation of search. performance shouldn't be an issue as the amount of messages in the queue is small
-    for (int i = 0; i < queue->max_count; ++i) {
+    for (unsigned int i = 0; i < queue->max_count; ++i) {
         if(queue->elements[i].packet.sequence_number < smallest){
             smallest = queue->elements[i].packet.sequence_number;
             index = i;

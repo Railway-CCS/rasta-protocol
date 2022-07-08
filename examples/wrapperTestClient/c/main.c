@@ -16,7 +16,7 @@
 #define ID_S1 0x62
 
 void addRastaString(struct RastaMessageData * data, int pos, char * str) {
-    int size =  strlen(str) + 1;
+    size_t size = strlen(str) + 1;
 
     struct RastaByteArray msg ;
     allocateRastaByteArray(&msg, size);

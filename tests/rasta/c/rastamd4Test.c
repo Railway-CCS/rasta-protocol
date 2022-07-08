@@ -23,7 +23,7 @@ void testMD4function(){
     unsigned char* data;
     data = rmalloc(len);
 
-    for (int i = 0; i < len; i++) {
+    for (unsigned int i = 0; i < len; i++) {
         data[i] = rand() % 255;
     }
 

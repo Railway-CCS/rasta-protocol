@@ -124,7 +124,7 @@ int version_accepted(struct rasta_receive_handle *h, const char version[4]){
             }
         }
     }*/
-    for (int i = 0; i < h->accepted_version.count; ++i) {
+    for (unsigned int i = 0; i < h->accepted_version.count; ++i) {
         if (compare_version(h->accepted_version.data[i].c, version) == 0){
             // match, version is in accepted version list
             return 1;
@@ -274,7 +274,7 @@ void sr_add_app_messages_to_buffer(struct rasta_receive_handle *h, struct rasta_
     logger_log(h->logger, LOG_LEVEL_INFO, "RaSTA add to buffer", "received %d application messages", received_data.count);
 
 
-    for (int i = 0; i < received_data.count; ++i) {
+    for (unsigned int i = 0; i < received_data.count; ++i) {
         logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA add to buffer", "received msg: %s", received_data.data_array[i]);
 
         rastaApplicationMessage * elem = rmalloc(sizeof(rastaApplicationMessage));
@@ -1403,7 +1403,7 @@ void * send_thread(void * handle){
                                msg_queue);
 
 
-                    for (int i = 0; i < msg_queue; i++) {
+                    for (unsigned int i = 0; i < msg_queue; i++) {
 
                         struct RastaByteArray * elem;
                         elem = fifo_pop(connection->fifo_send);
@@ -1585,7 +1585,7 @@ void sr_init_handle(struct rasta_handle* handle, const char* config_file_path) {
 
 void sr_connect(struct rasta_handle *handle, unsigned long id, struct RastaIPData *channels) {
 
-    for (int i = 0; i < handle->connections.size; i++) {
+    for (unsigned int i = 0; i < handle->connections.size; i++) {
         //TODO: Error handling
         if (handle->connections.data[i].remote_id == id) return;
     }
@@ -1653,7 +1653,7 @@ void sr_send(struct rasta_handle *h, unsigned long remote_id, struct RastaMessag
             return;
         }
 
-        for (int i = 0; i < app_messages.count; ++i) {
+        for (unsigned int i = 0; i < app_messages.count; ++i) {
             struct RastaByteArray msg;
             msg = app_messages.data_array[i];
 
@@ -1740,7 +1740,7 @@ void sr_cleanup(struct rasta_handle *h) {
 
     logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA Cleanup", "Threads joined");
 
-    for (int i = 0; i < h->connections.size; i++) {
+    for (unsigned int i = 0; i < h->connections.size; i++) {
         struct rasta_connection connection = h->connections.data[i];
         // free memory allocated for diagnostic intervals
         rfree(connection.diagnostic_intervals);
