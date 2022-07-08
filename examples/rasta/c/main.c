@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <rasta_new.h>
-#include "rasta_new.h"
 #include "rmemory.h"
 #include <unistd.h>
 

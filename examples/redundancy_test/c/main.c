@@ -17,7 +17,6 @@
 #include <rmemory.h>
 #include <unistd.h>
 #include <rastaredundancy_new.h>
-#include "rasta_red_multiplexer.h"
 
 #define SERVER_TC1_HOST "10.0.0.100"
 #define SERVER_TC2_HOST "10.0.0.101"

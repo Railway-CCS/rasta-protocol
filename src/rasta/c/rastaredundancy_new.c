@@ -1,10 +1,10 @@
-#include <rastaredundancy_new.h>
+#include "rastaredundancy_new.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <rmemory.h>
 #include <errno.h>
 #include <string.h>
-#include "rastaredundancy_new.h"
 #include "rastautil.h"
 
 rasta_redundancy_channel rasta_red_init(struct logger_t logger, struct RastaConfigInfo config, unsigned int transport_channel_count,

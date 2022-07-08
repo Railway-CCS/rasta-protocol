@@ -7,7 +7,6 @@
 #include <rmemory.h>
 #include <stdio.h>
 #include <rastaredundancy_new.h>
-#include "rasta_new.h"
 #include <time.h>
 #include <errno.h>
 #include <syscall.h>
