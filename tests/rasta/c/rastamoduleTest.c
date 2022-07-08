@@ -50,7 +50,7 @@ void testConversion(){
 
         CU_ASSERT_EQUAL(r.data.length, s.data.length);
 
-        for (int n = 0; n < r.data.length; n++) {
+        for (unsigned int n = 0; n < r.data.length; n++) {
             CU_ASSERT_EQUAL(r.data.bytes[n], s.data.bytes[n]);
         }
 
@@ -142,7 +142,7 @@ void testRedundancyConversionWithCrcChecksumCorrect() {
 
     CU_ASSERT_EQUAL(convertedFromBytes.data.data.length, r.data.length);
 
-    for (int i = 0; i < r.data.length; i++) {
+    for (unsigned int i = 0; i < r.data.length; i++) {
         CU_ASSERT_EQUAL(convertedFromBytes.data.data.bytes[i], r.data.bytes[i]);
     }
 
@@ -206,7 +206,7 @@ void testRedundancyConversionWithoutChecksum() {
 
     CU_ASSERT_EQUAL(convertedFromBytes.data.data.length, r.data.length);
 
-    for (int i = 0; i < r.data.length; i++) {
+    for (unsigned int i = 0; i < r.data.length; i++) {
         CU_ASSERT_EQUAL(convertedFromBytes.data.data.bytes[i], r.data.bytes[i]);
     }
 

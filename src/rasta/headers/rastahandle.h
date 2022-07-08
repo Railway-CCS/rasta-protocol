@@ -330,7 +330,7 @@ void fire_on_handshake_complete(struct rasta_notification_result result);
  * fires the onHeartbeatTimeout event set in the rasta handle
  * @param result
  */
-void fire_on_hearbeat_timeout(struct rasta_notification_result result);
+void fire_on_heartbeat_timeout(struct rasta_notification_result result);
 
 /**
  * initializes the rasta handle

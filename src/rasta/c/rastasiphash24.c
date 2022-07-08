@@ -14,7 +14,7 @@ void generateSiphash24(const unsigned char* data, int data_length, const unsigne
         default:
             // default no checksum
             // if no hash is wanted, return 8 zero bytes
-            memset(result, 8, 0);
+            memset(result, 0, 8);
             break;
     }
 }
@@ -175,16 +175,22 @@ int siphash(const uint8_t *in, const size_t inlen, const uint8_t *k,
     switch (left) {
         case 7:
             b |= ((uint64_t)in[6]) << 48;
+            // fall through
         case 6:
             b |= ((uint64_t)in[5]) << 40;
+            // fall through
         case 5:
             b |= ((uint64_t)in[4]) << 32;
+            // fall through
         case 4:
             b |= ((uint64_t)in[3]) << 24;
+            // fall through
         case 3:
             b |= ((uint64_t)in[2]) << 16;
+            // fall through
         case 2:
             b |= ((uint64_t)in[1]) << 8;
+            // fall through
         case 1:
             b |= ((uint64_t)in[0]);
             break;
@@ -264,8 +270,10 @@ int halfsiphash(const uint8_t *in, const size_t inlen, const uint8_t *k,
     switch (left) {
         case 3:
             b |= ((uint32_t)in[2]) << 16;
+            // fall through
         case 2:
             b |= ((uint32_t)in[1]) << 8;
+            // fall through
         case 1:
             b |= ((uint32_t)in[0]);
             break;

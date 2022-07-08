@@ -5,10 +5,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <rasta_new.h>
-#include "rasta_new.h"
-#include "rmemory.h"
 #include <unistd.h>
+#include <rasta_new.h>
+#include <rmemory.h>
 
 #define CONFIG_PATH_S "../../../rasta_server_local.cfg"
 #define CONFIG_PATH_C1 "../../../rasta_client1_local.cfg"
@@ -24,7 +23,7 @@ void printHelpAndExit(void){
 }
 
 void addRastaString(struct RastaMessageData * data, int pos, char * str) {
-    int size =  strlen(str) + 1;
+    size_t size = strlen(str) + 1;
 
     struct RastaByteArray msg ;
     allocateRastaByteArray(&msg, size);

@@ -23,7 +23,7 @@ void check_std_config() {
     //check that there are no entries in dictionary
     CU_ASSERT_EQUAL(cfg.dictionary.size,0);
 
-    //check sending standarts
+    //check sending standards
     CU_ASSERT_EQUAL(cfg.values.sending.t_max,1800);
     CU_ASSERT_EQUAL(cfg.values.sending.t_h,300);
     CU_ASSERT_EQUAL(cfg.values.sending.md4_type, RASTA_CHECKSUM_8B);
@@ -84,7 +84,7 @@ void check_var_config() {
 
     struct RastaConfig cfg = config_load("config.cfg");
 
-    //check sending standarts
+    //check sending standards
     CU_ASSERT_EQUAL(cfg.values.sending.t_max,1700);
     CU_ASSERT_EQUAL(cfg.values.sending.t_h,200);
     CU_ASSERT_EQUAL(cfg.values.sending.md4_type, RASTA_CHECKSUM_16B);

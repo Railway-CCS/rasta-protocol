@@ -89,7 +89,7 @@ struct RastaConfigInfo {
 
 /**
  * represents a rasta config
- * NOTE: please use the functions provided in config.h to access the dictionarys elements or use values for standart values
+ * NOTE: please use the functions provided in config.h to access the dictionarys elements or use values for standard values
  */
 struct RastaConfig {
     /**

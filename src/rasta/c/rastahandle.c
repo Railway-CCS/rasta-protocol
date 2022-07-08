@@ -279,7 +279,7 @@ void * on_heartbeat_timeout_call(void * container){
     return NULL;
 }
 
-void fire_on_hearbeat_timeout(struct rasta_notification_result result){
+void fire_on_heartbeat_timeout(struct rasta_notification_result result){
     pthread_mutex_lock(&result.handle->notification_lock);
 
     if (result.handle->notifications.on_heartbeat_timeout == NULL){
@@ -499,7 +499,7 @@ void rasta_handle_init(struct rasta_handle *h, const char* config_file_path) {
 
     if (config_accepted_version.type == DICTIONARY_ARRAY) {
         h->receive_handle->accepted_version = allocate_DictionaryArray(config_accepted_version.value.array.count);
-        for (int i = 0; i < config_accepted_version.value.array.count; ++i) {
+        for (unsigned int i = 0; i < config_accepted_version.value.array.count; ++i) {
             logger_log(&h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE_INIT", "Loaded accepted version: %s", config_accepted_version.value.array.data[i].c);
             struct DictionaryString s;
             rmemcpy(s.c, config_accepted_version.value.array.data[i].c, 256);

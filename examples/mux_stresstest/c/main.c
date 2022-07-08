@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <rastaredundancy_new.h>
 #include <signal.h>
-#include "rasta_red_multiplexer.h"
+
 #define SERVER_HOST "127.0.0.1"
 
 #define SERVER_ID 0xA

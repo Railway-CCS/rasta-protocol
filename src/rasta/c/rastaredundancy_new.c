@@ -1,10 +1,10 @@
-#include <rastaredundancy_new.h>
+#include "rastaredundancy_new.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <rmemory.h>
 #include <errno.h>
 #include <string.h>
-#include "rastaredundancy_new.h"
 #include "rastautil.h"
 
 rasta_redundancy_channel rasta_red_init(struct logger_t logger, struct RastaConfigInfo config, unsigned int transport_channel_count,
@@ -261,7 +261,7 @@ void rasta_red_cleanup(rasta_redundancy_channel * channel){
 
     logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red cleanup", "freeing connected channels");
     // free the channels
-    for (int i = 0; i < channel->connected_channel_count; ++i) {
+    for (unsigned int i = 0; i < channel->connected_channel_count; ++i) {
         rfree(channel->connected_channels[i].ip_address);
     }
     rfree(channel->connected_channels);

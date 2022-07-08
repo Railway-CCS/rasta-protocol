@@ -15,7 +15,7 @@
  * @param message the message that will be logged
  */
 void log_to_console(const char * message){
-    printf(message);
+    printf("%s", message);
     // flush buffer
     fflush(stdout);
 }
@@ -40,7 +40,7 @@ void log_to_file(const char * message, const char * log_file){
     }
 
     // write log message to file
-    fprintf(pFile, message);
+    fprintf(pFile, "%s", message);
 
     fclose(pFile);
 }

@@ -942,7 +942,7 @@ void redundancy_mux_remove_channel(redundancy_mux * mux, unsigned long channel_i
  */
 unsigned int get_queue_msg_count(redundancy_mux * mux, int redundancy_channel_index){
     pthread_mutex_lock(&mux->lock);
-    if (redundancy_channel_index > mux->channel_count -1){
+    if (redundancy_channel_index > (int)mux->channel_count -1){
         // channel does not exist anymore
         return 0;
     }
@@ -971,7 +971,7 @@ struct RastaPacket redundancy_mux_retrieve_all(redundancy_mux * mux){
             continue;
         }
 
-        if (current_index == mux->channel_count){
+        if (current_index == (int)mux->channel_count){
             current_index = 0;
         }
 
