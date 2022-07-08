@@ -1318,7 +1318,7 @@ void * heartbeat_thread(void * handle){
                     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HEARTBEAT", "T_i timer expired - send DisconnectionRequest");
 
                     // fire heartbeat timeout event
-                    fire_on_hearbeat_timeout(sr_create_notification_result(h->handle, connection));
+                    fire_on_heartbeat_timeout(sr_create_notification_result(h->handle, connection));
 
                     // T_i expired -> close connection
                     sr_close_connection(connection,h->handle,h->mux,h->info, RASTA_DISC_REASON_TIMEOUT, 0);

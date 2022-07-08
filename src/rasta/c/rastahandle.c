@@ -279,7 +279,7 @@ void * on_heartbeat_timeout_call(void * container){
     return NULL;
 }
 
-void fire_on_hearbeat_timeout(struct rasta_notification_result result){
+void fire_on_heartbeat_timeout(struct rasta_notification_result result){
     pthread_mutex_lock(&result.handle->notification_lock);
 
     if (result.handle->notifications.on_heartbeat_timeout == NULL){
