@@ -14,7 +14,7 @@ void generateSiphash24(const unsigned char* data, int data_length, const unsigne
         default:
             // default no checksum
             // if no hash is wanted, return 8 zero bytes
-            memset(result, 8, 0);
+            memset(result, 0, 8);
             break;
     }
 }

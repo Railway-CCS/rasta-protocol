@@ -10,7 +10,7 @@ void generateBlake2(unsigned char* data, int data_length, const unsigned char * 
 
     // if no hash is wanted, return 8 zero bytes
     if (hash_len == 0){
-        rmemset(result, 8, 0);
+        rmemset(result, 0, 8);
         return;
     }
 
