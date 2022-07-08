@@ -639,7 +639,7 @@ void config_setstd(struct RastaConfig * cfg) {
 
     //redundancy channels
     entr = config_get(cfg, "RASTA_REDUNDANCY_CONNECTIONS");
-    if (entr.type != DICTIONARY_ARRAY || entr.value.array.count < 0) {
+    if (entr.type != DICTIONARY_ARRAY || entr.value.array.count == 0) {
         //set std
         cfg->values.redundancy.connections.count = 0;
     }
