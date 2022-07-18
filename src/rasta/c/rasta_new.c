@@ -329,7 +329,7 @@ void sr_remove_confirmed_messages(struct rasta_receive_handle *h,struct rasta_co
 /* ----- processing of received packet types ----- */
 
 /**
- * calculates cts_in_seq for the given @p packet
+ * calculates cts_in_seq for the given @p packet as in 5.5.6.3
  * @param con the connection that is used
  * @param packet the packet
  * @return cts_in_seq (bool)
@@ -338,13 +338,8 @@ int sr_cts_in_seq(struct rasta_connection* con, struct RastaConfigInfoSending cf
 
     if (packet.type == RASTA_TYPE_HB || packet.type == RASTA_TYPE_DATA || packet.type == RASTA_TYPE_RETRDATA){
         // cts_in_seq := 0 <= CTS_PDU – CTS_R < t_i
-        int time_diff = (int)(packet.confirmed_timestamp - con->cts_r);
-        if (time_diff < 0){
-            time_diff = 0;
-        }
-        int cts_in_seq = (time_diff >= 0) && (time_diff < cfg.t_max);
-
-        return cts_in_seq;
+        return ((packet.confirmed_timestamp >= con->cts_r) &&
+                (packet.confirmed_timestamp - con->cts_r < cfg.t_max));
     } else {
         // for any other type return always true
         return 1;
@@ -383,7 +378,7 @@ int sr_sn_range_valid(struct rasta_connection * con, struct RastaConfigInfoSendi
 
     // else
     // seq. nr. in range when 0 <= SN_PDU - SN_R <= N_SENDMAX * 10
-    return (0 <= (packet.sequence_number - con->sn_r) &&
+    return ((packet.sequence_number >= con->sn_r) &&
             (packet.sequence_number - con->sn_r) <= (cfg.send_max * 10));
 }
 
@@ -402,7 +397,7 @@ int sr_cs_valid(struct rasta_connection * con, struct RastaPacket packet){
         return (packet.confirmed_sequence_number == (con->sn_t - 1));
     } else{
         // 0 <= CS_PDU - CS_R < SN_T - CS_R
-        return (0 <= (packet.confirmed_sequence_number - con->cs_r) &&
+        return ((packet.confirmed_sequence_number >= con->cs_r) &&
                 (packet.confirmed_sequence_number - con->cs_r) < (con->sn_t - con->cs_r));
     }
 }
