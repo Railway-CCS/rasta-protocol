@@ -11,9 +11,6 @@ rasta_redundancy_channel rasta_red_init(struct logger_t logger, struct RastaConf
                                         unsigned long id){
     rasta_redundancy_channel channel;
 
-    // initialize the channel mutex
-    pthread_mutex_init(&channel.channel_lock, NULL);
-
     channel.associated_id = id;
 
     channel.logger = logger;
@@ -66,7 +63,6 @@ rasta_redundancy_channel rasta_red_init(struct logger_t logger, struct RastaConf
  * @param connection the connection data which is used
  */
 void deliverDeferQueue(rasta_redundancy_channel * channel){
-    pthread_mutex_lock(&channel->channel_lock);
     logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red deliver deferq", "f_deliverDeferQueue called");
 
     // check if message with seq_pdu == seq_rx in defer queue
@@ -97,7 +93,6 @@ void deliverDeferQueue(rasta_redundancy_channel * channel){
 
         // increase seq_rx
         channel->seq_rx = channel->seq_rx +1;
-        pthread_mutex_unlock(&channel->channel_lock);
     }
     logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red deliver deferq", "deferq doesn't contain seq_pdu=%d",
                channel->seq_rx);
@@ -106,11 +101,9 @@ void deliverDeferQueue(rasta_redundancy_channel * channel){
 void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedundancyPacket packet, int channel_id){
     logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel %d: ptr=%p", channel_id, channel);
 
-    pthread_mutex_lock(&channel->channel_lock);
     if(!packet.checksum_correct){
         logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "Channel 0: Packet checksum incorrect", channel_id);
 
-        pthread_mutex_unlock(&channel->channel_lock);
         // checksum incorrect, exit function
         return;
     }
@@ -121,10 +114,9 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
     channel->connected_channels[channel_id].diagnostics_data.received_packets += 1;
 
     // only accept pdu with seq. nr = 0 as first message
-    if (channel->seq_rx == 0 && channel->seq_tx == 0 && packet.sequence_number != 0){
+    if (channel->seq_rx == 0 && channel->seq_tx == 0 && packet.sequence_number != 0) {
         logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: first seq_pdu != 0", channel_id);
 
-        pthread_mutex_unlock(&channel->channel_lock);
         return;
     }
 
@@ -150,7 +142,6 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
             }
         }
 
-        pthread_mutex_unlock(&channel->channel_lock);
         // discard message
         return;
     } else if (packet.sequence_number == channel->seq_rx){
@@ -183,7 +174,6 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
         // increase seq_rx
 
         // deliver message to upper layer
-        pthread_mutex_unlock(&channel->channel_lock);
         deliverDeferQueue(channel);
     } else if (channel->seq_rx < packet.sequence_number
                && packet.sequence_number <= (channel->seq_rx + channel->configuration_parameters.n_deferqueue_size * 10)){
@@ -195,7 +185,6 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
             logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: packet already in deferq",
                        channel_id);
 
-            pthread_mutex_unlock(&channel->channel_lock);
             // discard message
             // possibly statistic analysis
             return;
@@ -204,7 +193,6 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
             if (deferqueue_isfull(&channel->defer_q)){
                 logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: deferq full", channel_id);
 
-                pthread_mutex_unlock(&channel->channel_lock);
                 // full -> discard message
                 return;
             } else{
@@ -219,21 +207,17 @@ void rasta_red_f_receive(rasta_redundancy_channel * channel, struct RastaRedunda
         logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red receive", "channel %d: seq_pdu > seq_rx + 10 * MAX_DEFERQUEUE_SIZE"
                 , channel_id);
 
-        pthread_mutex_unlock(&channel->channel_lock);
         // discard message
         return;
     }
-    pthread_mutex_unlock(&channel->channel_lock);
 }
 
 void rasta_red_f_deferTmo(rasta_redundancy_channel * channel){
-    pthread_mutex_lock(&channel->channel_lock);
     // find smallest seq_pdu in defer queue
     int smallest_index = deferqueue_smallest_seqnr(&channel->defer_q);
 
     // set seq_rx to it
     channel->seq_rx = channel->defer_q.elements[smallest_index].packet.sequence_number;
-    pthread_mutex_unlock(&channel->channel_lock);
 
     logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red f_deferTmo", "calling f_deliverDeferQueue");
     deliverDeferQueue(channel);
@@ -274,8 +258,6 @@ void rasta_red_cleanup(rasta_redundancy_channel * channel){
     fifo_destroy(channel->fifo_recv);
 
     freeRastaByteArray(&channel->hashing_context.key);
-
-    pthread_mutex_destroy(&channel->channel_lock);
 
     logger_log(&channel->logger, LOG_LEVEL_DEBUG, "RaSTA Red cleanup", "Cleanup complete");
 }

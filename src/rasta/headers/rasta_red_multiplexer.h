@@ -6,8 +6,8 @@ extern "C" {  // only need to export C interface if
               // used by C++ source code
 #endif
 
-#include <pthread.h>
 #include <stdint.h>
+#include <event_system.h>
 #include "rastamodule.h"
 #include "rastaredundancy_new.h"
 
@@ -15,6 +15,12 @@ extern "C" {  // only need to export C interface if
  * define struct as type here to allow usage in notification pointers
  */
 typedef struct redundancy_mux redundancy_mux;
+
+struct receive_event_data {
+    fd_event * event;
+    struct rasta_handle * h;
+    int channel_index;
+};
 
 /**
  * pointer to a function that will be called in a separate thread when a new entity has sent data to this entity
@@ -51,6 +57,19 @@ typedef struct {
      */
     on_new_connection_ptr  on_new_connection;
 }rasta_redundancy_notifications;
+
+struct timeout_event_data {
+    timed_event * event;
+    redundancy_mux * mux;
+};
+
+/**
+ * initialize the event handling channel timeouts and the corresponding carry data
+ * @param event the event to initialize
+ * @param carry_data the carry data to initialize
+ * @param mux the redundancy_mux that will contain channels
+ */
+void init_timeout_events(timed_event * event, struct timeout_event_data * t_data, struct redundancy_mux * mux);
 
 /**
  * representation of a redundancy layer multiplexer.
@@ -93,25 +112,9 @@ struct redundancy_mux{
     struct logger_t logger;
 
     /**
-     * array of the thread that are receiving data on the listen ports.
-     * has length port_count
-     */
-    pthread_t * transport_receive_threads;
-
-    /**
-     * the thread that is used to check for timeouts in the redundancy channels
-     */
-    pthread_t timeout_thread;
-
-    /**
      * configuration data for the multiplexer and redundancy channels
      */
     struct RastaConfigInfo config;
-
-    /**
-     * mutex used to sync between threads
-     */
-    pthread_mutex_t lock;
 
     /**
      * the notifications of this multiplexer and it's redundancy channels
@@ -158,6 +161,8 @@ void redundancy_mux_open(redundancy_mux * mux);
  */
 void redundancy_mux_close(redundancy_mux * mux);
 
+char channel_receive_event(void * carry_data);
+
 /**
  * getter for a redundancy channel
  * @param mux the redundancy multiplexer that contains the channel
@@ -190,7 +195,7 @@ void redundancy_mux_send(redundancy_mux * mux, struct RastaPacket data);
  * @param id the RaSTA ID of the entity whose message is retrieved
  * @return the oldest (i.e. the PDU that arrived first) SR layer PDU in the receive buffer of the redundacy channel
  */
-struct RastaPacket redundancy_mux_retrieve(redundancy_mux * mux, unsigned long id);
+int redundancy_try_mux_retrieve(redundancy_mux * mux, unsigned long id, struct RastaPacket * out);
 
 /**
  * blocks until all notification threads are finished
@@ -227,7 +232,7 @@ void redundancy_mux_remove_channel(redundancy_mux * mux, unsigned long channel_i
  * @param mux the multiplexer that is used
  * @return a packet that was received in any of the connected redundancy channels
  */
-struct RastaPacket redundancy_mux_retrieve_all(redundancy_mux * mux);
+int redundancy_mux_try_retrieve_all(redundancy_mux * mux, struct RastaPacket* out);
 
 #ifdef __cplusplus
 }

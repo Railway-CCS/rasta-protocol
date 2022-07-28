@@ -16,12 +16,7 @@ void rastalist_change_size(struct RastaList *list, unsigned int size) {
     list->actual_size = size;
 }
 
-
-
-
 int rastalist_addConnection(struct RastaList *list, struct rasta_connection item) {
-    pthread_mutex_lock(&list->list_lock);
-
     if (list->size >= list->actual_size) {
         rastalist_change_size(list, list->actual_size * 2);
     }
@@ -30,17 +25,11 @@ int rastalist_addConnection(struct RastaList *list, struct rasta_connection item
     list->size++;
     unsigned int return_size = list->size -1;
 
-    pthread_mutex_unlock(&list->list_lock);
-
     return return_size;
-
 }
 
 void rastalist_remove(struct RastaList *list, unsigned int id) {
-    pthread_mutex_lock(&list->list_lock);
-
     if (id >= list->size){
-        pthread_mutex_unlock(&list->list_lock);
         return;
     }
 
@@ -50,23 +39,18 @@ void rastalist_remove(struct RastaList *list, unsigned int id) {
     }
 
     list->size--;
-    pthread_mutex_unlock(&list->list_lock);
 }
 
 unsigned int rastalist_count(struct RastaList *list) {
-    pthread_mutex_lock(&list->list_lock);
     unsigned int size = list->size;
-    pthread_mutex_unlock(&list->list_lock);
     return size;
 }
 
 struct rasta_connection * rastalist_getConnection(struct RastaList *list, unsigned int id) {
     struct rasta_connection* con = 0;
-    pthread_mutex_lock(&list->list_lock);
     if (id < list->size){
         con=&list->data[id];
     }
-    pthread_mutex_unlock(&list->list_lock);
     return con;
 }
 
@@ -82,14 +66,12 @@ struct rasta_connection * rastalist_getConnectionByRemote(struct RastaList *list
 int rastalist_getConnectionId(struct RastaList *list, unsigned long remote_id) {
     int id = -1;
 
-    pthread_mutex_lock(&list->list_lock);
     for (unsigned int i = 0; i < list->size; i++) {
         if (list->data[i].remote_id == remote_id) {
             id = i;
             break;
         }
     }
-    pthread_mutex_unlock(&list->list_lock);
 
     return id;
 }
@@ -104,8 +86,6 @@ struct RastaList rastalist_create(unsigned int initial_size) {
 
     result.data = rmalloc(sizeof(struct rasta_connection) * initial_size);
 
-    pthread_mutex_init(&result.list_lock, NULL);
-
     return result;
 }
 
@@ -118,7 +98,5 @@ void rastalist_free(struct RastaList* list) {
         rfree(list->data);
 
     }
-
-    pthread_mutex_destroy(&list->list_lock);
 }
 

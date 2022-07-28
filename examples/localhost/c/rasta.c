@@ -120,11 +120,17 @@ void onReceive(struct rasta_notification_result *result) {
 
             unsigned long target;
             if (p.id == ID_S1) {
-                while (client2) {sleep(1);}
+                if (client2) {
+                    // other client not connected
+                    return;
+                }
                 target = ID_S2;
             }
             else {
-                while (client1) {sleep(1);}
+                if (client1) {
+                    // other client not connected
+                    return;
+                }
                 target = ID_S1;
             }
 
@@ -147,8 +153,6 @@ void onReceive(struct rasta_notification_result *result) {
 
             sr_disconnect(result->handle,target);
 
-
-
             break;
         case ID_S1: case ID_S2:
             printf("\nReceived data from Server %lu", result->connection.remote_id);
@@ -161,6 +165,33 @@ void onReceive(struct rasta_notification_result *result) {
             printf("\n\n\n");
             break;
     }
+}
+
+struct connect_event_data {
+    struct rasta_handle * h;
+    struct RastaIPData * ip_data_arr;
+    fd_event * connect_event;
+    fd_event * schwarzenegger;
+};
+
+char connect_on_stdin(void * carry_data) {
+    printf("try to connect\n");
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+
+    printf("->   Connection request sent to 0x%lX\n", (unsigned long)ID_R);
+    struct connect_event_data * data = carry_data;
+    sr_connect(data->h, ID_R, data->ip_data_arr);
+    enable_fd_event(data->schwarzenegger);
+    disable_fd_event(data->connect_event);
+    return 0;
+}
+
+char terminator(void * h) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+    sr_cleanup(h);
+    return 1;
 }
 
 int main(int argc, char *argv[]){
@@ -176,6 +207,23 @@ int main(int argc, char *argv[]){
     toServer[0].port = 8888;
     toServer[1].port = 8889;
 
+    fd_event fd_events[2];
+    struct connect_event_data connect_on_stdin_event_data = {
+        .h = &h,
+        .ip_data_arr = toServer,
+        .connect_event = &fd_events[1],
+        .schwarzenegger = &fd_events[0]
+    };
+
+    fd_events[0].meta_information.callback = terminator;
+    fd_events[0].meta_information.carry_data = &h;
+    fd_events[0].fd = STDIN_FILENO;
+    fd_events[0].meta_information.enabled = 0;
+
+    fd_events[1].meta_information.callback = connect_on_stdin;
+    fd_events[1].meta_information.carry_data = &connect_on_stdin_event_data;
+    fd_events[1].fd = STDIN_FILENO;
+    fd_events[1].meta_information.enabled = 0;
 
     if (strcmp(argv[1], "r") == 0) {
         printf("->   R (ID = 0x%lX)\n", (unsigned long)ID_R);
@@ -186,7 +234,8 @@ int main(int argc, char *argv[]){
         h.notifications.on_receive = onReceive;
         h.notifications.on_handshake_complete = onHandshakeCompleted;
         h.notifications.on_heartbeat_timeout = onTimeout;
-
+        enable_fd_event(&fd_events[0]);
+        sr_begin(&h, fd_events, 1);
     }
     else if (strcmp(argv[1], "s1") == 0) {
         printf("->   S1 (ID = 0x%lX)\n", (unsigned long)ID_S1);
@@ -196,10 +245,9 @@ int main(int argc, char *argv[]){
         h.notifications.on_receive = onReceive;
         h.notifications.on_handshake_complete = onHandshakeCompleted;
         printf("->   Press Enter to connect\n");
-        getchar();
-        sr_connect(&h,ID_R,toServer);
-        printf("->   Connection request sent to 0x%lX\n", (unsigned long)ID_R);
-
+        disable_fd_event(&fd_events[0]);
+        enable_fd_event(&fd_events[1]);
+        sr_begin(&h, fd_events, 2);
     }
     else if (strcmp(argv[1], "s2") == 0) {
         printf("->   S2 (ID = 0x%lX)\n", (unsigned long)ID_S2);
@@ -209,17 +257,9 @@ int main(int argc, char *argv[]){
         h.notifications.on_receive = onReceive;
         h.notifications.on_handshake_complete = onHandshakeCompleted;
         printf("->   Press Enter to connect\n");
-        getchar();
-        sr_connect(&h,ID_R,toServer);
-        printf("->   Connection request sent to 0x%lX\n", (unsigned long)ID_R);
-
+        disable_fd_event(&fd_events[0]);
+        enable_fd_event(&fd_events[1]);
+        sr_begin(&h, fd_events, 2);
     }
-
-
-
-
-
-    getchar();
-    sr_cleanup(&h);
 }
 

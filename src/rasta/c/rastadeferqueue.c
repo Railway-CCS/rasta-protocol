@@ -45,31 +45,19 @@ struct defer_queue deferqueue_init(unsigned int n_max){
     // set max count
     queue.max_count = n_max;
 
-    // init the mutex
-    pthread_mutex_init(&queue.mutex, NULL);
-
     return queue;
 }
 
-int deferqueue_isfull(struct defer_queue * queue){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
+int deferqueue_isfull(struct defer_queue * queue) {
 
     int result = (queue->count == queue->max_count);
-
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
 
     return result;
 }
 
 void deferqueue_add(struct defer_queue * queue, struct RastaRedundancyPacket packet, unsigned long recv_ts){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
-
     if((queue->count == queue->max_count)){
         // queue full, return
-        pthread_mutex_unlock(&queue->mutex);
         return;
     }
 
@@ -81,22 +69,15 @@ void deferqueue_add(struct defer_queue * queue, struct RastaRedundancyPacket pac
     queue->elements[queue->count] = element;
 
     // increase count
-    queue->count = queue->count + 1;
+    queue->count++;
 
     // sort array
     sort(queue);
-
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
 }
 
 void deferqueue_remove(struct defer_queue * queue, unsigned long seq_nr){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
-
     int index = find_index(queue, seq_nr);
-    if(index == -1){
-        pthread_mutex_unlock(&queue->mutex);
+    if (index < 0){
         // element not in queue
         return;
     }
@@ -116,19 +97,10 @@ void deferqueue_remove(struct defer_queue * queue, unsigned long seq_nr){
 
     // sort the array
     sort(queue);
-
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
 }
 
 int deferqueue_contains(struct defer_queue * queue, unsigned long seq_nr){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
-
     int result = (find_index(queue, seq_nr) != -1);
-
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
 
     return result;
 }
@@ -138,13 +110,9 @@ void deferqueue_destroy(struct defer_queue * queue){
 
     queue->count = 0;
     queue->max_count= 0;
-
-    pthread_mutex_destroy(&queue->mutex);
 }
 
 int deferqueue_smallest_seqnr(struct defer_queue * queue){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
 
     int index = 0;
 
@@ -159,61 +127,35 @@ int deferqueue_smallest_seqnr(struct defer_queue * queue){
         }
     }
 
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
-
     return index;
 }
 
 struct RastaRedundancyPacket deferqueue_get(struct defer_queue * queue, unsigned long seq_nr){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
-
     int index = find_index(queue, seq_nr);
 
     if(index == -1){
-        pthread_mutex_unlock(&queue->mutex);
-        // element not in queue, return uninitialized struct
         return (const struct RastaRedundancyPacket){ 0 };
     }
 
     struct RastaRedundancyPacket result = queue->elements[index].packet;
-
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
 
     // return element at index
     return result;
 }
 
 unsigned long deferqueue_get_ts(struct defer_queue * queue, unsigned long seq_nr){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
-
     int index = find_index(queue, seq_nr);
 
     if(index == -1){
-        pthread_mutex_unlock(&queue->mutex);
-        // element not in queue, return uninitialized struct
         return 0;
     }
 
     unsigned long result = queue->elements[index].received_timestamp;
-
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
-
     // return element at index
     return result;
 }
 
 void deferqueue_clear(struct defer_queue * queue){
-    // acquire lock
-    pthread_mutex_lock(&queue->mutex);
-
     // just set count to 0, elements that are in the queue will be overridden
     queue->count = 0;
-
-    // free lock
-    pthread_mutex_unlock(&queue->mutex);
 }
