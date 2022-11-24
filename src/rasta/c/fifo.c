@@ -39,6 +39,7 @@ void fifo_push(fifo_t * fifo, void * element){
     }
 
     if (fifo->size == fifo->max_size){
+        printf("ERROR: FIFO buffer full! Logging messages might have been droppped!\n");
         return;
     }
 
