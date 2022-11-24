@@ -653,7 +653,7 @@ struct rasta_connection * handle_conreq(struct rasta_receive_handle *h, int conn
             new_con.connected_recv_buffer_size = connectionData.send_max;
 
             new_con.cs_r = new_con.sn_t - 1;
-            new_con.cts_r = cur_timestamp();
+            new_con.cts_r = receivedPacket.confirmed_timestamp;
             new_con.t_i = h->config.t_max;
 
             unsigned char *version = (unsigned char *) RASTA_VERSION;
@@ -908,7 +908,7 @@ void handle_hb(struct rasta_receive_handle *h, struct rasta_connection *connecti
                 connection->ts_r = receivedPacket.timestamp;
 
                 connection->cs_r = connection->sn_t -1;
-                connection->cts_r = cur_timestamp();
+                connection->cts_r = receivedPacket.confirmed_timestamp;
                 if (connection->current_state == RASTA_CONNECTION_RETRRUN) {
                     connection->current_state = RASTA_CONNECTION_UP;
                     logger_log(h->logger, LOG_LEVEL_DEBUG, "RaSTA HANDLE: Heartbeat", "State changed from RetrRun to Up");
@@ -1104,7 +1104,7 @@ void handle_retrresp(struct rasta_receive_handle *h, struct rasta_connection *co
         connection->ts_r = receivedPacket.timestamp;
 
         connection->cs_r = connection->sn_t -1;
-        connection->cts_r = cur_timestamp();
+        connection->cts_r = receivedPacket.confirmed_timestamp;
     } else {
         logger_log(h->logger, LOG_LEVEL_ERROR, "RaSTA receive", "received packet type retr_resp, but not in state retr_req");
         sr_close_connection(connection,h->handle,h->mux,h->info,RASTA_DISC_REASON_UNEXPECTEDTYPE, 0);
