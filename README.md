@@ -2,6 +2,11 @@
 
 C library implementation of the Rail Safe Transport Application (RaSTA) protocol.
 
+## Specification
+
+RaSTA is specified in DIN VDE V 0831-200.
+The standard is available to purchase here https://www.vde-verlag.de/normen/0800234/din-vde-v-0831-200-vde-v-0831-200-2015-06.html.
+
 ## Deployment
 ### Unit tests
 see [CUnit HowTo](md_doc/cunit.md)  
