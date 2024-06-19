@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2024-06-19
+
 ## [1.0.0] - 2021-08-12
 
 
-[Unreleased]: https://github.com/Railway-CCS/rasta-protocol/compare/v1.0.0...main
+[Unreleased]: https://github.com/Railway-CCS/rasta-protocol/compare/v1.1.0...main
+[1.1.0]: https://github.com/Railway-CCS/rasta-protocol/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Railway-CCS/rasta-protocol/releases/tag/v1.0.0
